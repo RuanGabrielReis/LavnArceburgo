@@ -1,0 +1,38 @@
+package com.example.lavnarceburgo.dto.funcionario;
+
+import com.example.lavnarceburgo.model.enums.Cargo;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.math.BigDecimal;
+
+public record FuncionarioRequestDTO(
+
+        @NotBlank(message = "O nome é obrigatório")
+        String nome,
+
+        @NotBlank(message = "O CPF é obrigatório")
+        String cpf,
+
+        String telefone,
+
+        String rg,
+
+        String endereco,
+
+        String cidade,
+
+        @NotBlank(message = "O e-mail é obrigatório")
+        @Email(message = "O e-mail deve ser válido")
+        String email,
+
+        @NotNull(message = "O cargo é obrigatório")
+        Cargo cargo,
+
+        @NotNull(message = "O salário é obrigatório")
+        @PositiveOrZero(message = "O salário não pode ser negativo")
+        BigDecimal salario
+) {
+}
