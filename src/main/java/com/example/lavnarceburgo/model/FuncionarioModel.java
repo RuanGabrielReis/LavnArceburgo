@@ -1,7 +1,11 @@
 package com.example.lavnarceburgo.model;
 
+import com.example.lavnarceburgo.model.UsuarioModel;
 import jakarta.persistence.*;
 import lombok.Data;
+import com.example.lavnarceburgo.model.enums.Cargo;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "funcionario")
@@ -9,6 +13,7 @@ import lombok.Data;
 public class FuncionarioModel {
 
     @Id
+    @Column(name = "codfuncionario")
     private Long codfuncionario;
 
     @OneToOne
@@ -16,9 +21,15 @@ public class FuncionarioModel {
     @JoinColumn(name = "codfuncionario")
     private UsuarioModel usuario;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "cargo", nullable = false)
-    private String cargo;
+    private Cargo cargo;
 
-    @Column(name = "salario", nullable = false)
-    private Float salario;
+    @Column(
+            name = "salario",
+            nullable = false,
+            precision = 10,
+            scale = 2
+    )
+    private BigDecimal salario;
 }

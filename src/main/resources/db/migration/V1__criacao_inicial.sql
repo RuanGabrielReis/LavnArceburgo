@@ -1,17 +1,4 @@
 -- ==========================================
--- RECRIA O BANCO
--- ==========================================
-
-DROP DATABASE IF EXISTS lavn;
-
-CREATE DATABASE lavn
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE lavn;
-
-
--- ==========================================
 -- TABELA: usuario
 -- Superclasse de aluno e funcionario
 -- ==========================================
@@ -53,7 +40,6 @@ CREATE TABLE funcionario (
 CREATE TABLE classe (
                         codclasse INT AUTO_INCREMENT PRIMARY KEY,
                         nivel VARCHAR(50) NOT NULL,
-                        numeroalunos INT NOT NULL DEFAULT 0,
                         codprofessor INT NULL,
 
                         CONSTRAINT fk_classe_professor
@@ -67,6 +53,7 @@ CREATE TABLE classe (
 -- ==========================================
 -- TABELA: aluno
 -- Subclasse de usuario
+-- Cada aluno pertence a no máximo uma classe
 -- ==========================================
 
 CREATE TABLE aluno (
@@ -94,7 +81,7 @@ CREATE TABLE aluno (
 
 -- ==========================================
 -- TABELA: horario
--- Horário planejado
+-- Horário semanal planejado de uma classe
 -- ==========================================
 
 CREATE TABLE horario (
@@ -102,7 +89,8 @@ CREATE TABLE horario (
                          duracaoaula INT NOT NULL,
                          codclasse INT NOT NULL,
                          sala VARCHAR(30),
-                         diahora DATETIME NOT NULL,
+                         diasemana VARCHAR(20) NOT NULL,
+                         horainicio TIME NOT NULL,
 
                          CONSTRAINT fk_horario_classe
                              FOREIGN KEY (codclasse)
@@ -114,7 +102,7 @@ CREATE TABLE horario (
 
 -- ==========================================
 -- TABELA: aula
--- Aula que realmente aconteceu
+-- Ocorrência real de uma aula
 -- ==========================================
 
 CREATE TABLE aula (
@@ -165,30 +153,42 @@ CREATE TABLE presenca (
 
 -- ==========================================
 -- TABELA: anotacoes
--- Observações sobre o aluno durante uma aula
+--
+-- Pode representar:
+-- TURMA -> vinculada a uma classe
+-- ALUNO -> vinculada a um aluno
+-- AULA  -> vinculada a uma aula
 -- ==========================================
 
 CREATE TABLE anotacoes (
                            codanotacao INT AUTO_INCREMENT PRIMARY KEY,
-                           tipo VARCHAR(50) NOT NULL,
-                           texto TEXT NOT NULL,
-                           codaluno INT NOT NULL,
-                           codaula INT NOT NULL,
-                           codclasse INT NOT NULL,
 
-                           CONSTRAINT fk_anotacoes_aluno_classe
-                               FOREIGN KEY (codaluno, codclasse)
-                                   REFERENCES aluno(codaluno, codclasse)
+                           tipo VARCHAR(20) NOT NULL,
+
+                           texto TEXT NOT NULL,
+
+                           codclasse INT NULL,
+                           codaluno INT NULL,
+                           codaula INT NULL,
+
+                           CONSTRAINT fk_anotacoes_classe
+                               FOREIGN KEY (codclasse)
+                                   REFERENCES classe(codclasse)
                                    ON DELETE CASCADE
                                    ON UPDATE CASCADE,
 
-                           CONSTRAINT fk_anotacoes_aula_classe
-                               FOREIGN KEY (codaula, codclasse)
-                                   REFERENCES aula(codaula, codclasse)
+                           CONSTRAINT fk_anotacoes_aluno
+                               FOREIGN KEY (codaluno)
+                                   REFERENCES aluno(codaluno)
+                                   ON DELETE CASCADE
+                                   ON UPDATE CASCADE,
+
+                           CONSTRAINT fk_anotacoes_aula
+                               FOREIGN KEY (codaula)
+                                   REFERENCES aula(codaula)
                                    ON DELETE CASCADE
                                    ON UPDATE CASCADE
 ) ENGINE=InnoDB;
-
 
 -- ==========================================
 -- ÍNDICES
@@ -200,8 +200,14 @@ CREATE INDEX idx_aluno_codclasse
 CREATE INDEX idx_aula_codclasse_data
     ON aula(codclasse, diahora);
 
-CREATE INDEX idx_horario_codclasse_data
-    ON horario(codclasse, diahora);
+CREATE INDEX idx_horario_codclasse_dia_hora
+    ON horario(codclasse, diasemana, horainicio);
 
-CREATE INDEX idx_anotacoes_aluno_aula
-    ON anotacoes(codaluno, codaula);
+CREATE INDEX idx_anotacoes_classe
+    ON anotacoes(codclasse);
+
+CREATE INDEX idx_anotacoes_aluno
+    ON anotacoes(codaluno);
+
+CREATE INDEX idx_anotacoes_aula
+    ON anotacoes(codaula);

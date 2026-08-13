@@ -16,9 +16,6 @@ public class ClasseModel {
     @Column(name = "nivel", nullable = false)
     private String nivel;
 
-    @Column(name = "numeroalunos", nullable = false)
-    private Integer numeroalunos;
-
     @ManyToOne
     @JoinColumn(name = "codprofessor")
     private FuncionarioModel professor;

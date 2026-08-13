@@ -3,7 +3,8 @@ package com.example.lavnarceburgo.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "horario")
@@ -25,10 +26,10 @@ public class HorarioModel {
     @Column(name = "sala")
     private String sala;
 
-    @Column(name = "diahora", nullable = false)
-    private LocalDateTime diahora;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diasemana", nullable = false)
+    private DayOfWeek diaSemana;
+
+    @Column(name = "horainicio", nullable = false)
+    private LocalTime horaInicio;
 }
-
-
-
-
