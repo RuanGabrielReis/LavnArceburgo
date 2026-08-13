@@ -4,7 +4,7 @@
 -- ==========================================
 
 CREATE TABLE usuario (
-                         codusuario INT AUTO_INCREMENT PRIMARY KEY,
+                         codusuario BIGINT AUTO_INCREMENT PRIMARY KEY,
                          nome VARCHAR(120) NOT NULL,
                          cpf CHAR(14) NOT NULL UNIQUE,
                          telefone VARCHAR(20),
@@ -21,7 +21,7 @@ CREATE TABLE usuario (
 -- ==========================================
 
 CREATE TABLE funcionario (
-                             codfuncionario INT PRIMARY KEY,
+                             codfuncionario BIGINT PRIMARY KEY,
                              cargo VARCHAR(80) NOT NULL,
                              salario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 
@@ -35,12 +35,13 @@ CREATE TABLE funcionario (
 
 -- ==========================================
 -- TABELA: classe
+-- Cada classe possui um professor responsável
 -- ==========================================
 
 CREATE TABLE classe (
-                        codclasse INT AUTO_INCREMENT PRIMARY KEY,
+                        codclasse BIGINT AUTO_INCREMENT PRIMARY KEY,
                         nivel VARCHAR(50) NOT NULL,
-                        codprofessor INT NULL,
+                        codprofessor BIGINT NULL,
 
                         CONSTRAINT fk_classe_professor
                             FOREIGN KEY (codprofessor)
@@ -57,8 +58,8 @@ CREATE TABLE classe (
 -- ==========================================
 
 CREATE TABLE aluno (
-                       codaluno INT PRIMARY KEY,
-                       codclasse INT NULL,
+                       codaluno BIGINT PRIMARY KEY,
+                       codclasse BIGINT NULL,
 
                        CONSTRAINT fk_aluno_usuario
                            FOREIGN KEY (codaluno)
@@ -72,8 +73,6 @@ CREATE TABLE aluno (
                                ON DELETE SET NULL
                                ON UPDATE CASCADE,
 
-    -- Permite referenciar aluno + classe
-    -- através de uma chave composta
                        CONSTRAINT uq_aluno_classe
                            UNIQUE (codaluno, codclasse)
 ) ENGINE=InnoDB;
@@ -85,9 +84,9 @@ CREATE TABLE aluno (
 -- ==========================================
 
 CREATE TABLE horario (
-                         codhorario INT AUTO_INCREMENT PRIMARY KEY,
+                         codhorario BIGINT AUTO_INCREMENT PRIMARY KEY,
                          duracaoaula INT NOT NULL,
-                         codclasse INT NOT NULL,
+                         codclasse BIGINT NOT NULL,
                          sala VARCHAR(30),
                          diasemana VARCHAR(20) NOT NULL,
                          horainicio TIME NOT NULL,
@@ -106,12 +105,10 @@ CREATE TABLE horario (
 -- ==========================================
 
 CREATE TABLE aula (
-                      codaula INT AUTO_INCREMENT PRIMARY KEY,
-                      codclasse INT NOT NULL,
+                      codaula BIGINT AUTO_INCREMENT PRIMARY KEY,
+                      codclasse BIGINT NOT NULL,
                       diahora DATETIME NOT NULL,
 
-    -- Necessário para garantir que
-    -- presença/anotação pertençam à mesma classe
                       CONSTRAINT uq_aula_classe
                           UNIQUE (codaula, codclasse),
 
@@ -125,14 +122,14 @@ CREATE TABLE aula (
 
 -- ==========================================
 -- TABELA: presenca
--- Presença de cada aluno em cada aula
+-- Presença de um aluno em uma aula
 -- ==========================================
 
 CREATE TABLE presenca (
-                          codaluno INT NOT NULL,
-                          codaula INT NOT NULL,
-                          codclasse INT NOT NULL,
-                          presente TINYINT(1) NOT NULL DEFAULT 0,
+                          codaluno BIGINT NOT NULL,
+                          codaula BIGINT NOT NULL,
+                          codclasse BIGINT NOT NULL,
+                          presente BOOLEAN NOT NULL DEFAULT FALSE,
                           observacao VARCHAR(255),
 
                           PRIMARY KEY (codaluno, codaula),
@@ -154,22 +151,19 @@ CREATE TABLE presenca (
 -- ==========================================
 -- TABELA: anotacoes
 --
--- Pode representar:
--- TURMA -> vinculada a uma classe
--- ALUNO -> vinculada a um aluno
--- AULA  -> vinculada a uma aula
+-- TURMA -> relacionada a uma classe
+-- ALUNO -> relacionada a um aluno
+-- AULA  -> relacionada a uma aula
 -- ==========================================
 
 CREATE TABLE anotacoes (
-                           codanotacao INT AUTO_INCREMENT PRIMARY KEY,
-
+                           codanotacao BIGINT AUTO_INCREMENT PRIMARY KEY,
                            tipo VARCHAR(20) NOT NULL,
-
                            texto TEXT NOT NULL,
 
-                           codclasse INT NULL,
-                           codaluno INT NULL,
-                           codaula INT NULL,
+                           codclasse BIGINT NULL,
+                           codaluno BIGINT NULL,
+                           codaula BIGINT NULL,
 
                            CONSTRAINT fk_anotacoes_classe
                                FOREIGN KEY (codclasse)
@@ -189,6 +183,7 @@ CREATE TABLE anotacoes (
                                    ON DELETE CASCADE
                                    ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
 
 -- ==========================================
 -- ÍNDICES
