@@ -81,8 +81,52 @@ public class AlunoService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("Aluno não encontrado")
                 );
+        return converterParaDTO(aluno);
+    }
+
+    @Transactional
+    public AlunoResponseDTO atualizar(long id, AlunoRequestDTO dto) {
+
+        AlunoModel aluno = alunoRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Aluno nao foi encontrado!!")
+                );
+        ClasseModel classe = classeRepository.findById(dto.codclasse())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Classe nao encontrada!!")
+                );
+
+        UsuarioModel usuario = aluno.getUsuario();
+
+        usuario.setNome(dto.nome());
+        usuario.setCpf(dto.cpf());
+        usuario.setTelefone(dto.telefone());
+        usuario.setCidade(dto.cidade());
+        usuario.setRg(dto.rg());
+        usuario.setEmail(dto.email());
+        usuario.setEndereco(dto.endereco());
+
+        aluno.setClasse(classe);
+
+        usuarioRepository.save(usuario);
+        aluno = alunoRepository.save(aluno);
 
         return converterParaDTO(aluno);
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+
+        AlunoModel aluno = alunoRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Aluno não encontrado")
+                );
+
+        UsuarioModel usuario = aluno.getUsuario();
+
+        alunoRepository.delete(aluno);
+        usuarioRepository.delete(usuario);
+
     }
 
     private AlunoResponseDTO converterParaDTO(AlunoModel aluno) {

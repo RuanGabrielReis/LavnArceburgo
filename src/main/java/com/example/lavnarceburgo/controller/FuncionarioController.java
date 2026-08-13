@@ -48,4 +48,27 @@ public class FuncionarioController {
                 funcionarioService.buscarPorId(id)
         );
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<FuncionarioResponseDTO> atualizar(
+        @PathVariable long id,
+        @Valid @RequestBody FuncionarioRequestDTO dto
+    ){
+        return ResponseEntity.ok(
+                funcionarioService.atualizar(id, dto)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<FuncionarioResponseDTO> excluir(
+            @PathVariable long id
+            ){
+                funcionarioService.excluir(id);
+                return ResponseEntity.noContent().build();
+    }
+
+
+
+
+
 }

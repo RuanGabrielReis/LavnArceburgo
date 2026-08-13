@@ -1,5 +1,6 @@
 package com.example.lavnarceburgo.service;
 
+import com.example.lavnarceburgo.dto.aluno.AlunoRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
 import com.example.lavnarceburgo.model.FuncionarioModel;
@@ -83,6 +84,54 @@ public class FuncionarioService {
 
         return converterParaDTO(funcionario);
     }
+
+@Transactional
+public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {
+    FuncionarioModel funcionario = funcionarioRepository.findById(id)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("Funcionario nao encontrado")
+            );
+
+    UsuarioModel usuario = funcionario.getUsuario();
+    if (!usuario.getCpf().equals(dto.cpf()) && usuarioRepository.existsByCpf(dto.cpf())) {
+        throw new IllegalArgumentException("Esse cpf ja apresenta usuario cadastrado");
+    }
+
+    if (!usuario.getEmail().equals(dto.email()) && usuarioRepository.existsByEmail(dto.email())) {
+        throw new IllegalArgumentException("Esse email ja apresenta um usuario cadastrado");
+    }
+    usuario.setNome(dto.nome());
+    usuario.setNome(dto.nome());
+    usuario.setCpf(dto.cpf());
+    usuario.setTelefone(dto.telefone());
+    usuario.setRg(dto.rg());
+    usuario.setEndereco(dto.endereco());
+    usuario.setCidade(dto.cidade());
+    usuario.setEmail(dto.email());
+
+    funcionario.setCargo(dto.cargo());
+    funcionario.setSalario(dto.salario());
+
+    usuarioRepository.save(usuario);
+    funcionario = funcionarioRepository.save(funcionario);
+
+    return converterParaDTO(funcionario);
+}
+    @Transactional
+    public void excluir(Long id) {
+
+        FuncionarioModel funcionario = funcionarioRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Funcionário não encontrado")
+                );
+
+        UsuarioModel usuario = funcionario.getUsuario();
+
+        funcionarioRepository.delete(funcionario);
+        usuarioRepository.delete(usuario);
+    }
+
+
 
     private FuncionarioResponseDTO converterParaDTO(
             FuncionarioModel funcionario
