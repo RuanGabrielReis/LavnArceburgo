@@ -47,4 +47,22 @@ public class ClasseController {
                 classeService.buscarPorId(id)
         );
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<ClasseResponseDTO> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ClasseRequestDTO dto
+    ) {
+        return ResponseEntity.ok(
+                classeService.atualizar(id, dto)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(
+            @PathVariable Long id
+    ) {
+        classeService.excluir(id);
+
+        return ResponseEntity.noContent().build();
+    }
 }

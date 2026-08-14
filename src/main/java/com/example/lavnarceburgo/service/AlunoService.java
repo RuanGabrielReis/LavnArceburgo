@@ -10,6 +10,7 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class AlunoService {
 
         ClasseModel classe = classeRepository.findById(dto.codclasse())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Classe não encontrada")
+                        new ResourceNotFoundException("Classe não encontrada")
                 );
 
         UsuarioModel usuario = new UsuarioModel();
@@ -79,7 +80,7 @@ public class AlunoService {
 
         AlunoModel aluno = alunoRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Aluno não encontrado")
+                        new ResourceNotFoundException("Aluno não encontrado")
                 );
         return converterParaDTO(aluno);
     }
@@ -89,11 +90,11 @@ public class AlunoService {
 
         AlunoModel aluno = alunoRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Aluno nao foi encontrado!!")
+                        new ResourceNotFoundException("Aluno não encontrado")
                 );
         ClasseModel classe = classeRepository.findById(dto.codclasse())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Classe nao encontrada!!")
+                        new ResourceNotFoundException("Aluno não encontrado")
                 );
 
         UsuarioModel usuario = aluno.getUsuario();
@@ -119,7 +120,7 @@ public class AlunoService {
 
         AlunoModel aluno = alunoRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Aluno não encontrado")
+                        new ResourceNotFoundException("Aluno não encontrado")
                 );
 
         UsuarioModel usuario = aluno.getUsuario();

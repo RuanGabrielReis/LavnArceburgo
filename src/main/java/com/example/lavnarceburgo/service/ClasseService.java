@@ -9,6 +9,8 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
+
 
 import java.util.List;
 
@@ -64,11 +66,56 @@ public class ClasseService {
         ClasseModel classe = classeRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Classe não encontrada")
+                        new ResourceNotFoundException("Classe não encontrada")
                 );
 
         return converterParaDTO(classe);
     }
+
+    @Transactional
+    public ClasseResponseDTO atualizar(
+            Long id,
+            ClasseRequestDTO dto
+    ) {
+
+        ClasseModel classe = classeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Classe não encontrada")
+                );
+
+        FuncionarioModel professor = funcionarioRepository
+                .findById(dto.codprofessor())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrada")
+                );
+
+        if (professor.getCargo() != Cargo.PROFESSOR) {
+            throw new IllegalArgumentException(
+                    "O funcionário informado não é um professor"
+            );
+        }
+
+        classe.setNivel(dto.nivel());
+        classe.setProfessor(professor);
+
+        classe = classeRepository.save(classe);
+
+        return converterParaDTO(classe);
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+
+        ClasseModel classe = classeRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Classe não encontrada")
+                );
+
+        classeRepository.delete(classe);
+    }
+
+
+
 
     private ClasseResponseDTO converterParaDTO(ClasseModel classe) {
 

@@ -9,6 +9,7 @@ import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -77,9 +78,7 @@ public class FuncionarioService {
         FuncionarioModel funcionario = funcionarioRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Funcionário não encontrado"
-                        )
+                        new ResourceNotFoundException("Funcionario não encontrado")
                 );
 
         return converterParaDTO(funcionario);
@@ -89,7 +88,7 @@ public class FuncionarioService {
 public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {
     FuncionarioModel funcionario = funcionarioRepository.findById(id)
             .orElseThrow(() ->
-                    new IllegalArgumentException("Funcionario nao encontrado")
+                    new ResourceNotFoundException("Funcionario não encontrado")
             );
 
     UsuarioModel usuario = funcionario.getUsuario();
@@ -122,7 +121,7 @@ public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Funcionário não encontrado")
+                        new ResourceNotFoundException("Funcionario não encontrado")
                 );
 
         UsuarioModel usuario = funcionario.getUsuario();
