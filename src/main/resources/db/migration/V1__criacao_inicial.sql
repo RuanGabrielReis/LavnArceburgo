@@ -149,7 +149,7 @@ CREATE TABLE presenca (
 
 
 -- ==========================================
--- TABELA: anotacoes
+-- TABELA: anotacao
 --
 -- TURMA -> relacionada a uma classe
 -- ALUNO -> relacionada a um aluno
