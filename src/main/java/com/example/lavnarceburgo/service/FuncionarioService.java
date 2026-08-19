@@ -1,15 +1,14 @@
 package com.example.lavnarceburgo.service;
 
-import com.example.lavnarceburgo.dto.aluno.AlunoRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -66,8 +65,7 @@ public class FuncionarioService {
     }
 
     public List<FuncionarioResponseDTO> listarTodos() {
-        return funcionarioRepository
-                .findAll()
+        return funcionarioRepository.findAll()
                 .stream()
                 .map(this::converterParaDTO)
                 .toList();
@@ -75,53 +73,64 @@ public class FuncionarioService {
 
     public FuncionarioResponseDTO buscarPorId(Long id) {
 
-        FuncionarioModel funcionario = funcionarioRepository
-                .findById(id)
+        FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Funcionario não encontrado")
+                        new ResourceNotFoundException("Funcionário não encontrado")
                 );
 
         return converterParaDTO(funcionario);
     }
 
-@Transactional
-public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {
-    FuncionarioModel funcionario = funcionarioRepository.findById(id)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException("Funcionario não encontrado")
+    @Transactional
+    public FuncionarioResponseDTO atualizar(
+            Long id,
+            FuncionarioRequestDTO dto
+    ) {
+
+        FuncionarioModel funcionario = funcionarioRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Funcionário não encontrado")
+                );
+
+        UsuarioModel usuario = funcionario.getUsuario();
+
+        if (!usuario.getCpf().equals(dto.cpf())
+                && usuarioRepository.existsByCpf(dto.cpf())) {
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse CPF"
             );
+        }
 
-    UsuarioModel usuario = funcionario.getUsuario();
-    if (!usuario.getCpf().equals(dto.cpf()) && usuarioRepository.existsByCpf(dto.cpf())) {
-        throw new IllegalArgumentException("Esse cpf ja apresenta usuario cadastrado");
+        if (!usuario.getEmail().equals(dto.email())
+                && usuarioRepository.existsByEmail(dto.email())) {
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse e-mail"
+            );
+        }
+
+        usuario.setNome(dto.nome());
+        usuario.setCpf(dto.cpf());
+        usuario.setTelefone(dto.telefone());
+        usuario.setRg(dto.rg());
+        usuario.setEndereco(dto.endereco());
+        usuario.setCidade(dto.cidade());
+        usuario.setEmail(dto.email());
+
+        funcionario.setCargo(dto.cargo());
+        funcionario.setSalario(dto.salario());
+
+        usuarioRepository.save(usuario);
+        funcionario = funcionarioRepository.save(funcionario);
+
+        return converterParaDTO(funcionario);
     }
 
-    if (!usuario.getEmail().equals(dto.email()) && usuarioRepository.existsByEmail(dto.email())) {
-        throw new IllegalArgumentException("Esse email ja apresenta um usuario cadastrado");
-    }
-    usuario.setNome(dto.nome());
-    usuario.setNome(dto.nome());
-    usuario.setCpf(dto.cpf());
-    usuario.setTelefone(dto.telefone());
-    usuario.setRg(dto.rg());
-    usuario.setEndereco(dto.endereco());
-    usuario.setCidade(dto.cidade());
-    usuario.setEmail(dto.email());
-
-    funcionario.setCargo(dto.cargo());
-    funcionario.setSalario(dto.salario());
-
-    usuarioRepository.save(usuario);
-    funcionario = funcionarioRepository.save(funcionario);
-
-    return converterParaDTO(funcionario);
-}
     @Transactional
     public void excluir(Long id) {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Funcionario não encontrado")
+                        new ResourceNotFoundException("Funcionário não encontrado")
                 );
 
         UsuarioModel usuario = funcionario.getUsuario();
@@ -129,8 +138,6 @@ public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {
         funcionarioRepository.delete(funcionario);
         usuarioRepository.delete(usuario);
     }
-
-
 
     private FuncionarioResponseDTO converterParaDTO(
             FuncionarioModel funcionario

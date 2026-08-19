@@ -45,13 +45,7 @@ public class PresencaService {
                         new ResourceNotFoundException("Aula não encontrada")
                 );
 
-        if (!aluno.getClasse().getCodclasse()
-                .equals(aula.getClasse().getCodclasse())) {
-
-            throw new IllegalArgumentException(
-                    "O aluno não pertence à mesma classe da aula"
-            );
-        }
+        validarMesmaClasse(aluno, aula);
 
         PresencaId id = new PresencaId(
                 dto.codaluno(),
@@ -114,6 +108,15 @@ public class PresencaService {
                         new ResourceNotFoundException("Presença não encontrada")
                 );
 
+        // Não permitimos mudar aluno/aula através do PUT.
+        if (!codaluno.equals(dto.codaluno())
+                || !codaula.equals(dto.codaula())) {
+
+            throw new IllegalArgumentException(
+                    "Aluno e aula da presença não podem ser alterados"
+            );
+        }
+
         presenca.setPresente(dto.presente());
         presenca.setObservacao(dto.observacao());
 
@@ -136,6 +139,26 @@ public class PresencaService {
                 );
 
         presencaRepository.delete(presenca);
+    }
+
+    private void validarMesmaClasse(
+            AlunoModel aluno,
+            AulaModel aula
+    ) {
+
+        if (aluno.getClasse() == null) {
+            throw new IllegalArgumentException(
+                    "O aluno não está vinculado a uma classe"
+            );
+        }
+
+        if (!aluno.getClasse().getCodclasse()
+                .equals(aula.getClasse().getCodclasse())) {
+
+            throw new IllegalArgumentException(
+                    "O aluno não pertence à mesma classe da aula"
+            );
+        }
     }
 
     private PresencaResponseDTO converterParaDTO(

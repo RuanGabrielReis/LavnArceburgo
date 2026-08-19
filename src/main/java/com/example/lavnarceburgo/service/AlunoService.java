@@ -2,6 +2,7 @@ package com.example.lavnarceburgo.service;
 
 import com.example.lavnarceburgo.dto.aluno.AlunoRequestDTO;
 import com.example.lavnarceburgo.dto.aluno.AlunoResponseDTO;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.AlunoModel;
 import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
@@ -10,7 +11,6 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -35,11 +35,15 @@ public class AlunoService {
     public AlunoResponseDTO cadastrar(AlunoRequestDTO dto) {
 
         if (usuarioRepository.existsByCpf(dto.cpf())) {
-            throw new IllegalArgumentException("Já existe um usuário cadastrado com esse CPF");
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse CPF"
+            );
         }
 
         if (usuarioRepository.existsByEmail(dto.email())) {
-            throw new IllegalArgumentException("Já existe um usuário cadastrado com esse e-mail");
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse e-mail"
+            );
         }
 
         ClasseModel classe = classeRepository.findById(dto.codclasse())
@@ -82,30 +86,49 @@ public class AlunoService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Aluno não encontrado")
                 );
+
         return converterParaDTO(aluno);
     }
 
     @Transactional
-    public AlunoResponseDTO atualizar(long id, AlunoRequestDTO dto) {
+    public AlunoResponseDTO atualizar(
+            Long id,
+            AlunoRequestDTO dto
+    ) {
 
         AlunoModel aluno = alunoRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Aluno não encontrado")
                 );
+
         ClasseModel classe = classeRepository.findById(dto.codclasse())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Aluno não encontrado")
+                        new ResourceNotFoundException("Classe não encontrada")
                 );
 
         UsuarioModel usuario = aluno.getUsuario();
 
+        if (!usuario.getCpf().equals(dto.cpf())
+                && usuarioRepository.existsByCpf(dto.cpf())) {
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse CPF"
+            );
+        }
+
+        if (!usuario.getEmail().equals(dto.email())
+                && usuarioRepository.existsByEmail(dto.email())) {
+            throw new IllegalArgumentException(
+                    "Já existe um usuário cadastrado com esse e-mail"
+            );
+        }
+
         usuario.setNome(dto.nome());
         usuario.setCpf(dto.cpf());
         usuario.setTelefone(dto.telefone());
-        usuario.setCidade(dto.cidade());
         usuario.setRg(dto.rg());
-        usuario.setEmail(dto.email());
         usuario.setEndereco(dto.endereco());
+        usuario.setCidade(dto.cidade());
+        usuario.setEmail(dto.email());
 
         aluno.setClasse(classe);
 
@@ -127,7 +150,6 @@ public class AlunoService {
 
         alunoRepository.delete(aluno);
         usuarioRepository.delete(usuario);
-
     }
 
     private AlunoResponseDTO converterParaDTO(AlunoModel aluno) {

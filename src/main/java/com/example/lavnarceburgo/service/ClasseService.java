@@ -2,6 +2,7 @@ package com.example.lavnarceburgo.service;
 
 import com.example.lavnarceburgo.dto.classe.ClasseRequestDTO;
 import com.example.lavnarceburgo.dto.classe.ClasseResponseDTO;
+import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
@@ -9,8 +10,6 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.lavnarceburgo.exception.ResourceNotFoundException;
-
 
 import java.util.List;
 
@@ -31,17 +30,7 @@ public class ClasseService {
     @Transactional
     public ClasseResponseDTO cadastrar(ClasseRequestDTO dto) {
 
-        FuncionarioModel professor = funcionarioRepository
-                .findById(dto.codprofessor())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Professor não encontrado")
-                );
-
-        if (professor.getCargo() != Cargo.PROFESSOR) {
-            throw new IllegalArgumentException(
-                    "O funcionário informado não é um professor"
-            );
-        }
+        FuncionarioModel professor = buscarProfessor(dto.codprofessor());
 
         ClasseModel classe = new ClasseModel();
 
@@ -54,8 +43,7 @@ public class ClasseService {
     }
 
     public List<ClasseResponseDTO> listarTodas() {
-        return classeRepository
-                .findAll()
+        return classeRepository.findAll()
                 .stream()
                 .map(this::converterParaDTO)
                 .toList();
@@ -63,8 +51,7 @@ public class ClasseService {
 
     public ClasseResponseDTO buscarPorId(Long id) {
 
-        ClasseModel classe = classeRepository
-                .findById(id)
+        ClasseModel classe = classeRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Classe não encontrada")
                 );
@@ -83,17 +70,7 @@ public class ClasseService {
                         new ResourceNotFoundException("Classe não encontrada")
                 );
 
-        FuncionarioModel professor = funcionarioRepository
-                .findById(dto.codprofessor())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Professor não encontrada")
-                );
-
-        if (professor.getCargo() != Cargo.PROFESSOR) {
-            throw new IllegalArgumentException(
-                    "O funcionário informado não é um professor"
-            );
-        }
+        FuncionarioModel professor = buscarProfessor(dto.codprofessor());
 
         classe.setNivel(dto.nivel());
         classe.setProfessor(professor);
@@ -108,14 +85,27 @@ public class ClasseService {
 
         ClasseModel classe = classeRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Classe não encontrada")
+                        new ResourceNotFoundException("Classe não encontrada")
                 );
 
         classeRepository.delete(classe);
     }
 
+    private FuncionarioModel buscarProfessor(Long id) {
 
+        FuncionarioModel professor = funcionarioRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado")
+                );
 
+        if (professor.getCargo() != Cargo.PROFESSOR) {
+            throw new IllegalArgumentException(
+                    "O funcionário informado não possui cargo de professor"
+            );
+        }
+
+        return professor;
+    }
 
     private ClasseResponseDTO converterParaDTO(ClasseModel classe) {
 

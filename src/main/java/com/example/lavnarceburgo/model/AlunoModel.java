@@ -6,7 +6,7 @@ import lombok.Data;
 @Entity
 @Table(name = "aluno")
 @Data
-public class AlunoModel {
+public class    AlunoModel {
 
     @Id
     @Column(name = "codaluno")

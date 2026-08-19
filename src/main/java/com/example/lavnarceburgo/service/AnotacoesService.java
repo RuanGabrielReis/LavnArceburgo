@@ -3,9 +3,15 @@ package com.example.lavnarceburgo.service;
 import com.example.lavnarceburgo.dto.anotacao.AnotacaoRequestDTO;
 import com.example.lavnarceburgo.dto.anotacao.AnotacaoResponseDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
-import com.example.lavnarceburgo.model.*;
+import com.example.lavnarceburgo.model.AlunoModel;
+import com.example.lavnarceburgo.model.AnotacoesModel;
+import com.example.lavnarceburgo.model.AulaModel;
+import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.model.enums.TipoAnotacao;
-import com.example.lavnarceburgo.repository.*;
+import com.example.lavnarceburgo.repository.AlunoRepository;
+import com.example.lavnarceburgo.repository.AnotacoesRepository;
+import com.example.lavnarceburgo.repository.AulaRepository;
+import com.example.lavnarceburgo.repository.ClasseRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +39,8 @@ public class AnotacoesService {
 
     @Transactional
     public AnotacaoResponseDTO cadastrar(AnotacaoRequestDTO dto) {
+
+        validarRelacionamentos(dto);
 
         AnotacoesModel anotacao = new AnotacoesModel();
 
@@ -74,6 +82,8 @@ public class AnotacoesService {
                         new ResourceNotFoundException("Anotação não encontrada")
                 );
 
+        validarRelacionamentos(dto);
+
         anotacao.setTipo(dto.tipo());
         anotacao.setTexto(dto.texto());
 
@@ -99,10 +109,7 @@ public class AnotacoesService {
         anotacoesRepository.delete(anotacao);
     }
 
-    private void configurarRelacionamento(
-            AnotacoesModel anotacao,
-            AnotacaoRequestDTO dto
-    ) {
+    private void validarRelacionamentos(AnotacaoRequestDTO dto) {
 
         if (dto.tipo() == TipoAnotacao.TURMA) {
 
@@ -111,6 +118,49 @@ public class AnotacoesService {
                         "O código da classe é obrigatório para anotação de turma"
                 );
             }
+
+            if (dto.codaluno() != null || dto.codaula() != null) {
+                throw new IllegalArgumentException(
+                        "Anotação de turma deve estar vinculada somente a uma classe"
+                );
+            }
+
+        } else if (dto.tipo() == TipoAnotacao.ALUNO) {
+
+            if (dto.codaluno() == null) {
+                throw new IllegalArgumentException(
+                        "O código do aluno é obrigatório para anotação de aluno"
+                );
+            }
+
+            if (dto.codclasse() != null || dto.codaula() != null) {
+                throw new IllegalArgumentException(
+                        "Anotação de aluno deve estar vinculada somente a um aluno"
+                );
+            }
+
+        } else if (dto.tipo() == TipoAnotacao.AULA) {
+
+            if (dto.codaula() == null) {
+                throw new IllegalArgumentException(
+                        "O código da aula é obrigatório para anotação de aula"
+                );
+            }
+
+            if (dto.codclasse() != null || dto.codaluno() != null) {
+                throw new IllegalArgumentException(
+                        "Anotação de aula deve estar vinculada somente a uma aula"
+                );
+            }
+        }
+    }
+
+    private void configurarRelacionamento(
+            AnotacoesModel anotacao,
+            AnotacaoRequestDTO dto
+    ) {
+
+        if (dto.tipo() == TipoAnotacao.TURMA) {
 
             ClasseModel classe = classeRepository.findById(dto.codclasse())
                     .orElseThrow(() ->
@@ -121,12 +171,6 @@ public class AnotacoesService {
 
         } else if (dto.tipo() == TipoAnotacao.ALUNO) {
 
-            if (dto.codaluno() == null) {
-                throw new IllegalArgumentException(
-                        "O código do aluno é obrigatório para anotação de aluno"
-                );
-            }
-
             AlunoModel aluno = alunoRepository.findById(dto.codaluno())
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Aluno não encontrado")
@@ -135,12 +179,6 @@ public class AnotacoesService {
             anotacao.setAluno(aluno);
 
         } else if (dto.tipo() == TipoAnotacao.AULA) {
-
-            if (dto.codaula() == null) {
-                throw new IllegalArgumentException(
-                        "O código da aula é obrigatório para anotação de aula"
-                );
-            }
 
             AulaModel aula = aulaRepository.findById(dto.codaula())
                     .orElseThrow(() ->
@@ -159,12 +197,15 @@ public class AnotacoesService {
                 anotacao.getCodanotacao(),
                 anotacao.getTipo(),
                 anotacao.getTexto(),
+
                 anotacao.getClasse() != null
                         ? anotacao.getClasse().getCodclasse()
                         : null,
+
                 anotacao.getAluno() != null
                         ? anotacao.getAluno().getCodaluno()
                         : null,
+
                 anotacao.getAula() != null
                         ? anotacao.getAula().getCodaula()
                         : null
