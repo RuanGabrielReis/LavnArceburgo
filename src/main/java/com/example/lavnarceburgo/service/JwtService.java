@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -13,15 +14,20 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "lavn-chave-jwt-super-secreta-com-pelo-menos-32-caracteres";
+    private final String secret;
+    private final long expiracao;
 
-    private static final long EXPIRACAO =
-            1000L * 60 * 60 * 8;
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expiracao
+    ) {
+        this.secret = secret;
+        this.expiracao = expiracao;
+    }
 
     private SecretKey getChave() {
         return Keys.hmacShaKeyFor(
-                SECRET.getBytes(StandardCharsets.UTF_8)
+                secret.getBytes(StandardCharsets.UTF_8)
         );
     }
 
@@ -29,8 +35,8 @@ public class JwtService {
 
         Date agora = new Date();
 
-        Date expiracao =
-                new Date(agora.getTime() + EXPIRACAO);
+        Date dataExpiracao =
+                new Date(agora.getTime() + expiracao);
 
         return Jwts.builder()
                 .subject(
@@ -47,7 +53,7 @@ public class JwtService {
                         funcionario.getCargo().name()
                 )
                 .issuedAt(agora)
-                .expiration(expiracao)
+                .expiration(dataExpiracao)
                 .signWith(getChave())
                 .compact();
     }
