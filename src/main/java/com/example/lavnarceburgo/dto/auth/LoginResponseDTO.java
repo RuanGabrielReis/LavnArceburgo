@@ -7,7 +7,8 @@ public record LoginResponseDTO(
         Long codfuncionario,
         String nome,
         String email,
-        Cargo cargo
+        Cargo cargo,
+        String token
 
 ) {
 }

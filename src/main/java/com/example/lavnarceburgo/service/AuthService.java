@@ -12,13 +12,16 @@ public class AuthService {
 
     private final FuncionarioRepository funcionarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
             FuncionarioRepository funcionarioRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
     ) {
         this.funcionarioRepository = funcionarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
@@ -38,11 +41,15 @@ public class AuthService {
             );
         }
 
+        String token =
+                jwtService.gerarToken(funcionario);
+
         return new LoginResponseDTO(
                 funcionario.getCodfuncionario(),
                 funcionario.getUsuario().getNome(),
                 funcionario.getUsuario().getEmail(),
-                funcionario.getCargo()
+                funcionario.getCargo(),
+                token
         );
     }
 }
