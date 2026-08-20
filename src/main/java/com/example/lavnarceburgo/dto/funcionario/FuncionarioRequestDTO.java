@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
@@ -33,6 +34,10 @@ public record FuncionarioRequestDTO(
 
         @NotNull(message = "O salário é obrigatório")
         @PositiveOrZero(message = "O salário não pode ser negativo")
-        BigDecimal salario
+        BigDecimal salario,
+
+        @NotBlank(message = "A senha é obrigatória")
+        @Size(min = 6, message = "A senha deve possuir no mínimo 6 caracteres")
+                String senha
 ) {
 }

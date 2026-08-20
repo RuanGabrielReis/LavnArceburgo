@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -24,6 +25,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FuncionarioServiceTest {
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private FuncionarioRepository funcionarioRepository;
@@ -50,7 +54,8 @@ class FuncionarioServiceTest {
                 "Arceburgo",
                 "professor@teste.com",
                 Cargo.PROFESSOR,
-                new BigDecimal("3000.00")
+                new BigDecimal("3000.00"),
+                "123456"
         );
 
         usuario = new UsuarioModel();
@@ -81,6 +86,9 @@ class FuncionarioServiceTest {
 
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenReturn(usuario);
+
+        when(passwordEncoder.encode("123456"))
+                .thenReturn("$2a$10$senhaHashDeTeste");
 
         when(funcionarioRepository.save(any(FuncionarioModel.class)))
                 .thenAnswer(invocation -> {
@@ -193,11 +201,15 @@ class FuncionarioServiceTest {
                         "Arceburgo",
                         "professor@teste.com",
                         Cargo.PROFESSOR,
-                        new BigDecimal("3500.00")
+                        new BigDecimal("3500.00"),
+                        "123456"
                 );
 
         when(funcionarioRepository.findById(1L))
                 .thenReturn(Optional.of(funcionario));
+
+        when(passwordEncoder.encode("123456"))
+                .thenReturn("$2a$10$senhaHashDeTeste");
 
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenReturn(usuario);

@@ -32,4 +32,7 @@ public class FuncionarioModel {
             scale = 2
     )
     private BigDecimal salario;
+
+    @Column(name = "senha", nullable = false)
+    private String senha;
 }

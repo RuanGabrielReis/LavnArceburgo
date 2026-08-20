@@ -7,6 +7,7 @@ import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +18,16 @@ public class FuncionarioService {
 
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public FuncionarioService(
             FuncionarioRepository funcionarioRepository,
-            UsuarioRepository usuarioRepository
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -58,6 +62,9 @@ public class FuncionarioService {
         funcionario.setUsuario(usuario);
         funcionario.setCargo(dto.cargo());
         funcionario.setSalario(dto.salario());
+        funcionario.setSenha(
+                passwordEncoder.encode(dto.senha())
+        );
 
         funcionario = funcionarioRepository.save(funcionario);
 
@@ -118,6 +125,9 @@ public class FuncionarioService {
 
         funcionario.setCargo(dto.cargo());
         funcionario.setSalario(dto.salario());
+        funcionario.setSenha(
+                passwordEncoder.encode(dto.senha())
+        );
 
         usuarioRepository.save(usuario);
         funcionario = funcionarioRepository.save(funcionario);
