@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.http.HttpMethod;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 public class SecurityConfig {
@@ -38,7 +39,57 @@ public class SecurityConfig {
                         )
                 )
 
+                .exceptionHandling(exception -> exception
+
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+
+                                    response.setStatus(
+                                            HttpServletResponse.SC_UNAUTHORIZED
+                                    );
+
+                                    response.setContentType(
+                                            "application/json;charset=UTF-8"
+                                    );
+
+                                    response.getWriter().write(
+                                            """
+                                            {
+                                              "status": 401,
+                                              "erro": "Não autenticado"
+                                            }
+                                            """
+                                    );
+                                }
+                        )
+
+                        .accessDeniedHandler(
+                                (request, response, accessDeniedException) -> {
+
+                                    response.setStatus(
+                                            HttpServletResponse.SC_FORBIDDEN
+                                    );
+
+                                    response.setContentType(
+                                            "application/json;charset=UTF-8"
+                                    );
+
+                                    response.getWriter().write(
+                                            """
+                                            {
+                                              "status": 403,
+                                              "erro": "Acesso negado"
+                                            }
+                                            """
+                                    );
+                                }
+                        )
+                )
+
                 .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers("/api/auth/login")
+                        .permitAll()
 
                         // LOGIN
                         .requestMatchers("/api/auth/login")
@@ -126,7 +177,6 @@ public class SecurityConfig {
                 jwtAuthFilter,
                 UsernamePasswordAuthenticationFilter.class
         );
-
 
         return http.build();
     }
