@@ -24,17 +24,20 @@ public class AnotacoesService {
     private final ClasseRepository classeRepository;
     private final AlunoRepository alunoRepository;
     private final AulaRepository aulaRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public AnotacoesService(
             AnotacoesRepository anotacoesRepository,
             ClasseRepository classeRepository,
             AlunoRepository alunoRepository,
-            AulaRepository aulaRepository
+            AulaRepository aulaRepository,
+            UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.anotacoesRepository = anotacoesRepository;
         this.classeRepository = classeRepository;
         this.alunoRepository = alunoRepository;
         this.aulaRepository = aulaRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -55,8 +58,10 @@ public class AnotacoesService {
     }
 
     public List<AnotacaoResponseDTO> listarTodas() {
+
         return anotacoesRepository.findAll()
                 .stream()
+                .filter(this::podeAcessarAnotacao)
                 .map(this::converterParaDTO)
                 .toList();
     }
@@ -65,8 +70,12 @@ public class AnotacoesService {
 
         AnotacoesModel anotacao = anotacoesRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Anotação não encontrada")
+                        new ResourceNotFoundException(
+                                "Anotação não encontrada"
+                        )
                 );
+
+        validarAcessoAnotacao(anotacao);
 
         return converterParaDTO(anotacao);
     }
@@ -81,6 +90,8 @@ public class AnotacoesService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Anotação não encontrada")
                 );
+
+        validarAcessoAnotacao(anotacao);
 
         validarRelacionamentos(dto);
 
@@ -105,6 +116,8 @@ public class AnotacoesService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Anotação não encontrada")
                 );
+
+        validarAcessoAnotacao(anotacao);
 
         anotacoesRepository.delete(anotacao);
     }
@@ -164,8 +177,13 @@ public class AnotacoesService {
 
             ClasseModel classe = classeRepository.findById(dto.codclasse())
                     .orElseThrow(() ->
-                            new ResourceNotFoundException("Classe não encontrada")
+                            new ResourceNotFoundException(
+                                    "Classe não encontrada"
+                            )
                     );
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(classe);
 
             anotacao.setClasse(classe);
 
@@ -173,8 +191,19 @@ public class AnotacoesService {
 
             AlunoModel aluno = alunoRepository.findById(dto.codaluno())
                     .orElseThrow(() ->
-                            new ResourceNotFoundException("Aluno não encontrado")
+                            new ResourceNotFoundException(
+                                    "Aluno não encontrado"
+                            )
                     );
+
+            if (aluno.getClasse() == null) {
+                throw new IllegalArgumentException(
+                        "O aluno não está vinculado a uma classe"
+                );
+            }
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(aluno.getClasse());
 
             anotacao.setAluno(aluno);
 
@@ -182,8 +211,13 @@ public class AnotacoesService {
 
             AulaModel aula = aulaRepository.findById(dto.codaula())
                     .orElseThrow(() ->
-                            new ResourceNotFoundException("Aula não encontrada")
+                            new ResourceNotFoundException(
+                                    "Aula não encontrada"
+                            )
                     );
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(aula.getClasse());
 
             anotacao.setAula(aula);
         }
@@ -210,5 +244,77 @@ public class AnotacoesService {
                         ? anotacao.getAula().getCodaula()
                         : null
         );
+    }
+
+    private void validarAcessoAnotacao(
+            AnotacoesModel anotacao
+    ) {
+
+        if (anotacao.getTipo() == TipoAnotacao.TURMA) {
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(
+                            anotacao.getClasse()
+                    );
+
+        } else if (anotacao.getTipo() == TipoAnotacao.ALUNO) {
+
+            AlunoModel aluno = anotacao.getAluno();
+
+            if (aluno == null || aluno.getClasse() == null) {
+                throw new IllegalArgumentException(
+                        "Aluno não está vinculado a uma classe"
+                );
+            }
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(
+                            aluno.getClasse()
+                    );
+
+        } else if (anotacao.getTipo() == TipoAnotacao.AULA) {
+
+            usuarioAutenticadoService
+                    .validarAcessoAClasse(
+                            anotacao.getAula().getClasse()
+                    );
+        }
+    }
+
+    private boolean podeAcessarAnotacao(
+            AnotacoesModel anotacao
+    ) {
+
+        if (anotacao.getTipo() == TipoAnotacao.TURMA) {
+
+            return usuarioAutenticadoService
+                    .podeAcessarClasse(
+                            anotacao.getClasse()
+                    );
+
+        } else if (anotacao.getTipo() == TipoAnotacao.ALUNO) {
+
+            AlunoModel aluno = anotacao.getAluno();
+
+            return aluno != null
+                    && aluno.getClasse() != null
+                    && usuarioAutenticadoService
+                    .podeAcessarClasse(
+                            aluno.getClasse()
+                    );
+
+        } else if (anotacao.getTipo() == TipoAnotacao.AULA) {
+
+            AulaModel aula = anotacao.getAula();
+
+            return aula != null
+                    && aula.getClasse() != null
+                    && usuarioAutenticadoService
+                    .podeAcessarClasse(
+                            aula.getClasse()
+                    );
+        }
+
+        return false;
     }
 }

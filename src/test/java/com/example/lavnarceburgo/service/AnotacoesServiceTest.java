@@ -12,6 +12,7 @@ import com.example.lavnarceburgo.repository.AlunoRepository;
 import com.example.lavnarceburgo.repository.AnotacoesRepository;
 import com.example.lavnarceburgo.repository.AulaRepository;
 import com.example.lavnarceburgo.repository.ClasseRepository;
+import com.example.lavnarceburgo.service.UsuarioAutenticadoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,12 +42,16 @@ class AnotacoesServiceTest {
     @Mock
     private AulaRepository aulaRepository;
 
+    @Mock
+    private UsuarioAutenticadoService usuarioAutenticadoService;
+
     @InjectMocks
     private AnotacoesService anotacoesService;
 
     private ClasseModel classe;
     private AlunoModel aluno;
     private AulaModel aula;
+    private AnotacaoRequestDTO dtoTurma;
 
     @BeforeEach
     void prepararDados() {
@@ -61,6 +67,42 @@ class AnotacoesServiceTest {
         aula = new AulaModel();
         aula.setCodaula(1L);
         aula.setClasse(classe);
+
+        dtoTurma = new AnotacaoRequestDTO(
+                TipoAnotacao.TURMA,
+                "Anotação de teste",
+                1L,
+                null,
+                null
+        );
+    }
+
+    @Test
+    void deveListarAnotacoesPermitidas() {
+
+        AnotacoesModel anotacao = new AnotacoesModel();
+        anotacao.setCodanotacao(1L);
+        anotacao.setTipo(TipoAnotacao.TURMA);
+        anotacao.setTexto("Anotação da turma");
+        anotacao.setClasse(classe);
+
+        when(anotacoesRepository.findAll())
+                .thenReturn(List.of(anotacao));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(true);
+
+        List<AnotacaoResponseDTO> resposta =
+                anotacoesService.listarTodas();
+
+        assertEquals(1, resposta.size());
+        assertEquals(
+                "Anotação da turma",
+                resposta.get(0).texto()
+        );
     }
 
     @Test
@@ -280,5 +322,88 @@ class AnotacoesServiceTest {
 
         verify(anotacoesRepository, never())
                 .delete(any(AnotacoesModel.class));
+    }
+
+    @Test
+    void deveImpedirCadastroDeAnotacaoEmTurmaDeOutroProfessor() {
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        doThrow(
+                new SecurityException(
+                        "Você não possui acesso a esta turma"
+                )
+        )
+                .when(usuarioAutenticadoService)
+                .validarAcessoAClasse(classe);
+
+        SecurityException exception = assertThrows(
+                SecurityException.class,
+                () -> anotacoesService.cadastrar(dtoTurma)
+        );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
+
+        verify(anotacoesRepository, never())
+                .save(any(AnotacoesModel.class));
+    }
+
+    @Test
+    void deveImpedirBuscaDeAnotacaoDeOutroProfessor() {
+
+        AnotacoesModel anotacao = new AnotacoesModel();
+        anotacao.setCodanotacao(1L);
+        anotacao.setTipo(TipoAnotacao.TURMA);
+        anotacao.setTexto("Anotação de outra turma");
+        anotacao.setClasse(classe);
+
+        when(anotacoesRepository.findById(1L))
+                .thenReturn(Optional.of(anotacao));
+
+        doThrow(
+                new SecurityException(
+                        "Você não possui acesso a esta turma"
+                )
+        )
+                .when(usuarioAutenticadoService)
+                .validarAcessoAClasse(classe);
+
+        SecurityException exception = assertThrows(
+                SecurityException.class,
+                () -> anotacoesService.buscarPorId(1L)
+        );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void naoDeveListarAnotacaoDeOutroProfessor() {
+
+        AnotacoesModel anotacao = new AnotacoesModel();
+        anotacao.setCodanotacao(1L);
+        anotacao.setTipo(TipoAnotacao.TURMA);
+        anotacao.setTexto("Anotação de outra turma");
+        anotacao.setClasse(classe);
+
+        when(anotacoesRepository.findAll())
+                .thenReturn(List.of(anotacao));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(false);
+
+        List<AnotacaoResponseDTO> resposta =
+                anotacoesService.listarTodas();
+
+        assertTrue(resposta.isEmpty());
     }
 }
