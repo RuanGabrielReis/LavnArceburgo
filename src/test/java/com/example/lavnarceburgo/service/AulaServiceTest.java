@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -197,5 +198,66 @@ class AulaServiceTest {
 
         verify(aulaRepository, never())
                 .delete(any(AulaModel.class));
+    }
+
+    @Test
+    void deveListarAulaDaTurmaDoProfessor() {
+
+        when(aulaRepository.findAll())
+                .thenReturn(List.of(aula));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(true);
+
+        List<AulaResponseDTO> resposta =
+                aulaService.listarTodos();
+
+        assertEquals(1, resposta.size());
+    }
+
+    @Test
+    void naoDeveListarAulaDeOutroProfessor() {
+
+        when(aulaRepository.findAll())
+                .thenReturn(List.of(aula));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(false);
+
+        List<AulaResponseDTO> resposta =
+                aulaService.listarTodos();
+
+        assertTrue(resposta.isEmpty());
+    }
+
+    @Test
+    void deveImpedirBuscaDeAulaDeOutroProfessor() {
+
+        when(aulaRepository.findById(1L))
+                .thenReturn(Optional.of(aula));
+
+        doThrow(
+                new SecurityException(
+                        "Você não possui acesso a esta turma"
+                )
+        )
+                .when(usuarioAutenticadoService)
+                .validarAcessoAClasse(classe);
+
+        SecurityException exception = assertThrows(
+                SecurityException.class,
+                () -> aulaService.buscarPorId(1L)
+        );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
     }
 }

@@ -88,9 +88,6 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/auth/login")
-                        .permitAll()
-
                         // LOGIN
                         .requestMatchers("/api/auth/login")
                         .permitAll()
@@ -174,10 +171,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/presencas/**")
                         .hasRole("PROFESSOR")
 
-                        // ANOTAÇÕES
-                        .requestMatchers("/api/anotacoes/**")
+                        // ANOTAÇÕES - consulta
+                        .requestMatchers(HttpMethod.GET, "/api/anotacoes/**")
+                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+
+                        // ANOTAÇÕES - professor
+                        .requestMatchers(HttpMethod.POST, "/api/anotacoes/**")
                         .hasRole("PROFESSOR")
 
+                        .requestMatchers(HttpMethod.PUT, "/api/anotacoes/**")
+                        .hasRole("PROFESSOR")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/anotacoes/**")
+                        .hasRole("PROFESSOR")
                         // outras rotas exigem autenticação
                         .anyRequest()
                         .authenticated()

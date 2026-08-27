@@ -17,13 +17,15 @@ public class HorarioService {
 
     private final HorarioRepository horarioRepository;
     private final ClasseRepository classeRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public HorarioService(
             HorarioRepository horarioRepository,
-            ClasseRepository classeRepository
+            ClasseRepository classeRepository, UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.horarioRepository = horarioRepository;
         this.classeRepository = classeRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -48,20 +50,49 @@ public class HorarioService {
     }
 
     public List<HorarioResponseDTO> listarTodos() {
+
         return horarioRepository.findAll()
                 .stream()
+                .filter(this::podeAcessarHorario)
                 .map(this::converterParaDTO)
                 .toList();
+    }
+
+    private boolean podeAcessarHorario(HorarioModel horario) {
+
+        return horario.getClasse() != null
+                && usuarioAutenticadoService
+                .podeAcessarClasse(
+                        horario.getClasse()
+                );
     }
 
     public HorarioResponseDTO buscarPorId(Long id) {
 
         HorarioModel horario = horarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Horário não encontrado")
+                        new ResourceNotFoundException(
+                                "Horário não encontrado"
+                        )
                 );
 
+        validarAcessoHorario(horario);
+
         return converterParaDTO(horario);
+    }
+
+    private void validarAcessoHorario(HorarioModel horario) {
+
+        if (horario.getClasse() == null) {
+            throw new SecurityException(
+                    "Você não possui acesso a este horário"
+            );
+        }
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(
+                        horario.getClasse()
+                );
     }
 
     @Transactional

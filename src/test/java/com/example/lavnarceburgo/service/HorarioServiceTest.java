@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,6 +31,9 @@ class HorarioServiceTest {
 
     @Mock
     private ClasseRepository classeRepository;
+
+    @Mock
+    private UsuarioAutenticadoService usuarioAutenticadoService;
 
     @InjectMocks
     private HorarioService horarioService;
@@ -203,5 +207,66 @@ class HorarioServiceTest {
 
         verify(horarioRepository, never())
                 .delete(any(HorarioModel.class));
+    }
+
+    @Test
+    void deveListarHorarioDaTurmaDoProfessor() {
+
+        when(horarioRepository.findAll())
+                .thenReturn(List.of(horario));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(true);
+
+        List<HorarioResponseDTO> resposta =
+                horarioService.listarTodos();
+
+        assertEquals(1, resposta.size());
+    }
+
+    @Test
+    void naoDeveListarHorarioDeOutraTurma() {
+
+        when(horarioRepository.findAll())
+                .thenReturn(List.of(horario));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(false);
+
+        List<HorarioResponseDTO> resposta =
+                horarioService.listarTodos();
+
+        assertTrue(resposta.isEmpty());
+    }
+
+    @Test
+    void deveImpedirBuscaDeHorarioDeOutraTurma() {
+
+        when(horarioRepository.findById(1L))
+                .thenReturn(Optional.of(horario));
+
+        doThrow(
+                new SecurityException(
+                        "Você não possui acesso a esta turma"
+                )
+        )
+                .when(usuarioAutenticadoService)
+                .validarAcessoAClasse(classe);
+
+        SecurityException exception = assertThrows(
+                SecurityException.class,
+                () -> horarioService.buscarPorId(1L)
+        );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
     }
 }
