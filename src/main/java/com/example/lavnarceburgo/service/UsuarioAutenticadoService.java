@@ -75,6 +75,10 @@ public class UsuarioAutenticadoService {
             return true;
         }
 
+        if (funcionario.getCargo() == Cargo.MASTER) {
+            return true;
+        }
+
         if (funcionario.getCargo() != Cargo.PROFESSOR) {
             return false;
         }

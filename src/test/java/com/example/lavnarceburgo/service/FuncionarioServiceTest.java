@@ -269,4 +269,138 @@ class FuncionarioServiceTest {
         verify(usuarioRepository, never())
                 .delete(any(UsuarioModel.class));
     }
+
+    @Test
+    void naoDevePermitirCadastrarFuncionarioMaster() {
+
+        FuncionarioRequestDTO dtoMaster =
+                new FuncionarioRequestDTO(
+                        "Master Teste",
+                        "999.999.999-99",
+                        "35999999999",
+                        "MG999999",
+                        "Rua Teste, 100",
+                        "Arceburgo",
+                        "master@teste.com",
+                        Cargo.MASTER,
+                        new BigDecimal("5000.00"),
+                        "master123"
+                );
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.cadastrar(dtoMaster)
+        );
+
+        assertEquals(
+                "Usuário MASTER não pode ser criado por este endpoint",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .save(any(FuncionarioModel.class));
+    }
+
+    @Test
+    void naoDevePermitirPromoverFuncionarioParaMaster() {
+
+        funcionario.setCargo(Cargo.PROFESSOR);
+
+        FuncionarioRequestDTO dtoMaster =
+                new FuncionarioRequestDTO(
+                        usuario.getNome(),
+                        usuario.getCpf(),
+                        usuario.getTelefone(),
+                        usuario.getRg(),
+                        usuario.getEndereco(),
+                        usuario.getCidade(),
+                        usuario.getEmail(),
+                        Cargo.MASTER,
+                        new BigDecimal("5000.00"),
+                        "novaSenha123"
+                );
+
+        when(funcionarioRepository.findById(1L))
+                .thenReturn(Optional.of(funcionario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.atualizar(
+                        1L,
+                        dtoMaster
+                )
+        );
+
+        assertEquals(
+                "Não é permitido promover um funcionário para MASTER",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .save(any(FuncionarioModel.class));
+    }
+
+    @Test
+    void naoDevePermitirExcluirMaster() {
+
+        funcionario.setCargo(Cargo.MASTER);
+
+        when(funcionarioRepository.findById(1L))
+                .thenReturn(Optional.of(funcionario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.excluir(1L)
+        );
+
+        assertEquals(
+                "O usuário MASTER não pode ser excluído",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .delete(any(FuncionarioModel.class));
+
+        verify(usuarioRepository, never())
+                .delete(any(UsuarioModel.class));
+    }
+
+    @Test
+    void naoDevePermitirRebaixarMaster() {
+
+        funcionario.setCargo(Cargo.MASTER);
+
+        FuncionarioRequestDTO dtoSecretaria =
+                new FuncionarioRequestDTO(
+                        usuario.getNome(),
+                        usuario.getCpf(),
+                        usuario.getTelefone(),
+                        usuario.getRg(),
+                        usuario.getEndereco(),
+                        usuario.getCidade(),
+                        usuario.getEmail(),
+                        Cargo.SECRETARIA,
+                        new BigDecimal("5000.00"),
+                        "novaSenha123"
+                );
+
+        when(funcionarioRepository.findById(1L))
+                .thenReturn(Optional.of(funcionario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.atualizar(
+                        1L,
+                        dtoSecretaria
+                )
+        );
+
+        assertEquals(
+                "O usuário MASTER não pode ter seu cargo alterado",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .save(any(FuncionarioModel.class));
+    }
 }

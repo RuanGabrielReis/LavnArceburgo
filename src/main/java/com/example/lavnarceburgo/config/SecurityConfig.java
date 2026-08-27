@@ -92,74 +92,75 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login")
                         .permitAll()
 
-                        // FUNCIONÁRIOS
+                        // FUNCIONÁRIOS - Consulta
                         .requestMatchers(HttpMethod.GET, "/api/funcionarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
+                        // FUNCIONÁRIOS
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER")
 
                         .requestMatchers(HttpMethod.PUT, "/api/funcionarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/funcionarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER")
 
                         // ALUNOS
                         .requestMatchers(HttpMethod.GET, "/api/alunos/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         .requestMatchers(HttpMethod.POST, "/api/alunos/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.PUT, "/api/alunos/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/alunos/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         // CLASSES
                         .requestMatchers(HttpMethod.GET, "/api/classes/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         .requestMatchers(HttpMethod.POST, "/api/classes/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.PUT, "/api/classes/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/classes/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         // HORÁRIOS
                         .requestMatchers(HttpMethod.GET, "/api/horarios/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         .requestMatchers(HttpMethod.POST, "/api/horarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.PUT, "/api/horarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         // AULAS
                         .requestMatchers(HttpMethod.GET, "/api/aulas/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         .requestMatchers(HttpMethod.POST, "/api/aulas/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.PUT, "/api/aulas/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/aulas/**")
-                        .hasRole("SECRETARIA")
+                        .hasAnyRole("MASTER", "SECRETARIA")
 
                          // PRESENÇAS - consulta
                         .requestMatchers(HttpMethod.GET, "/api/presencas/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         // PRESENÇAS - lançamento e alteração
                         .requestMatchers(HttpMethod.POST, "/api/presencas/**")
@@ -173,7 +174,7 @@ public class SecurityConfig {
 
                         // ANOTAÇÕES - consulta
                         .requestMatchers(HttpMethod.GET, "/api/anotacoes/**")
-                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+                        .hasAnyRole("MASTER", "SECRETARIA", "PROFESSOR")
 
                         // ANOTAÇÕES - professor
                         .requestMatchers(HttpMethod.POST, "/api/anotacoes/**")

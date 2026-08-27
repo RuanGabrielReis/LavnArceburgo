@@ -1,5 +1,6 @@
 package com.example.lavnarceburgo.security;
 
+import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -81,5 +82,37 @@ class SecurityAuthorizationTest {
                 .andExpect(
                         status().isOk()
                 );
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaDevePoderConsultarFuncionarios() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/funcionarios")
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "PROFESSOR")
+    void professorNaoDevePoderConsultarFuncionarios() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/funcionarios")
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaNaoDevePoderCadastrarFuncionario() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/funcionarios")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isForbidden());
     }
 }
