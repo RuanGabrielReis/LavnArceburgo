@@ -20,15 +20,17 @@ public class AlunoService {
     private final AlunoRepository alunoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ClasseRepository classeRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public AlunoService(
             AlunoRepository alunoRepository,
             UsuarioRepository usuarioRepository,
-            ClasseRepository classeRepository
+            ClasseRepository classeRepository, UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.alunoRepository = alunoRepository;
         this.usuarioRepository = usuarioRepository;
         this.classeRepository = classeRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -74,20 +76,49 @@ public class AlunoService {
     }
 
     public List<AlunoResponseDTO> listarTodos() {
+
         return alunoRepository.findAll()
                 .stream()
+                .filter(this::podeAcessarAluno)
                 .map(this::converterParaDTO)
                 .toList();
+    }
+
+    private boolean podeAcessarAluno(AlunoModel aluno) {
+
+        return aluno.getClasse() != null
+                && usuarioAutenticadoService
+                .podeAcessarClasse(
+                        aluno.getClasse()
+                );
     }
 
     public AlunoResponseDTO buscarPorId(Long id) {
 
         AlunoModel aluno = alunoRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Aluno não encontrado")
+                        new ResourceNotFoundException(
+                                "Aluno não encontrado"
+                        )
                 );
 
+        validarAcessoAluno(aluno);
+
         return converterParaDTO(aluno);
+    }
+
+    private void validarAcessoAluno(AlunoModel aluno) {
+
+        if (aluno.getClasse() == null) {
+            throw new SecurityException(
+                    "Você não possui acesso a este aluno"
+            );
+        }
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(
+                        aluno.getClasse()
+                );
     }
 
     @Transactional

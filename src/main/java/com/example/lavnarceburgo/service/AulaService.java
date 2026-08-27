@@ -3,6 +3,7 @@ package com.example.lavnarceburgo.service;
 import com.example.lavnarceburgo.dto.aula.AulaRequestDTO;
 import com.example.lavnarceburgo.dto.aula.AulaResponseDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
+import com.example.lavnarceburgo.model.AlunoModel;
 import com.example.lavnarceburgo.model.AulaModel;
 import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.repository.AulaRepository;
@@ -17,13 +18,16 @@ public class AulaService {
 
     private final AulaRepository aulaRepository;
     private final ClasseRepository classeRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
+
 
     public AulaService(
             AulaRepository aulaRepository,
-            ClasseRepository classeRepository
+            ClasseRepository classeRepository, UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.aulaRepository = aulaRepository;
         this.classeRepository = classeRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -48,16 +52,30 @@ public class AulaService {
 
         return aulaRepository.findAll()
                 .stream()
+                .filter(this::podeAcessarAula)
                 .map(this::converterParaDTO)
                 .toList();
+    }
+
+    private boolean podeAcessarAula(AulaModel aula) {
+
+        return aula.getClasse() != null
+                && usuarioAutenticadoService
+                .podeAcessarClasse(
+                        aula.getClasse()
+                );
     }
 
     public AulaResponseDTO buscarPorId(Long id) {
 
         AulaModel aula = aulaRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Aula não encontrada")
+                        new ResourceNotFoundException(
+                                "Aula não encontrada"
+                        )
                 );
+
+        validarAcessoAula(aula);
 
         return converterParaDTO(aula);
     }
@@ -84,6 +102,20 @@ public class AulaService {
         aula = aulaRepository.save(aula);
 
         return converterParaDTO(aula);
+    }
+
+    private void validarAcessoAula(AulaModel aula) {
+
+        if (aula.getClasse() == null) {
+            throw new SecurityException(
+                    "Você não possui acesso a esta aula"
+            );
+        }
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(
+                        aula.getClasse()
+                );
     }
 
     @Transactional

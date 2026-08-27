@@ -11,6 +11,7 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -33,6 +34,9 @@ class AlunoServiceTest {
 
     @Mock
     private ClasseRepository classeRepository;
+
+    @Mock
+    private UsuarioAutenticadoService usuarioAutenticadoService;
 
     @InjectMocks
     private AlunoService alunoService;
@@ -180,6 +184,69 @@ class AlunoServiceTest {
 
         verify(alunoRepository, never())
                 .save(any(AlunoModel.class));
+    }
+
+    @Test
+    void deveListarAlunoDaTurmaDoProfessor() {
+
+        when(alunoRepository.findAll())
+                .thenReturn(List.of(aluno));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(true);
+
+        List<AlunoResponseDTO> resposta =
+                alunoService.listarTodos();
+
+        assertEquals(1, resposta.size());
+        assertEquals("Aluno Teste", resposta.get(0).nome());
+        assertEquals(1L, resposta.get(0).codclasse());
+    }
+
+    @Test
+    void naoDeveListarAlunoDeOutraTurma() {
+
+        when(alunoRepository.findAll())
+                .thenReturn(List.of(aluno));
+
+        when(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        )
+                .thenReturn(false);
+
+        List<AlunoResponseDTO> resposta =
+                alunoService.listarTodos();
+
+        assertTrue(resposta.isEmpty());
+    }
+
+    @Test
+    void deveImpedirBuscaDeAlunoDeOutraTurma() {
+
+        when(alunoRepository.findById(2L))
+                .thenReturn(Optional.of(aluno));
+
+        doThrow(
+                new SecurityException(
+                        "Você não possui acesso a esta turma"
+                )
+        )
+                .when(usuarioAutenticadoService)
+                .validarAcessoAClasse(classe);
+
+        SecurityException exception = assertThrows(
+                SecurityException.class,
+                () -> alunoService.buscarPorId(2L)
+        );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
     }
 
     @Test

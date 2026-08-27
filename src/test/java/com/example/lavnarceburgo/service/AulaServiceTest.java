@@ -30,6 +30,9 @@ class AulaServiceTest {
     @Mock
     private ClasseRepository classeRepository;
 
+    @Mock
+    private UsuarioAutenticadoService usuarioAutenticadoService;
+
     @InjectMocks
     private AulaService aulaService;
 
