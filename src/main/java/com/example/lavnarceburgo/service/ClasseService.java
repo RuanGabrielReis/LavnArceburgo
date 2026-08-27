@@ -18,13 +18,15 @@ public class ClasseService {
 
     private final ClasseRepository classeRepository;
     private final FuncionarioRepository funcionarioRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public ClasseService(
             ClasseRepository classeRepository,
-            FuncionarioRepository funcionarioRepository
+            FuncionarioRepository funcionarioRepository, UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.classeRepository = classeRepository;
         this.funcionarioRepository = funcionarioRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -43,8 +45,12 @@ public class ClasseService {
     }
 
     public List<ClasseResponseDTO> listarTodas() {
+
         return classeRepository.findAll()
                 .stream()
+                .filter(
+                        usuarioAutenticadoService::podeAcessarClasse
+                )
                 .map(this::converterParaDTO)
                 .toList();
     }
@@ -53,8 +59,13 @@ public class ClasseService {
 
         ClasseModel classe = classeRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Classe não encontrada")
+                        new ResourceNotFoundException(
+                                "Classe não encontrada"
+                        )
                 );
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(classe);
 
         return converterParaDTO(classe);
     }

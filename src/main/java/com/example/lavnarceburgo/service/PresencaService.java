@@ -21,15 +21,17 @@ public class PresencaService {
     private final PresencaRepository presencaRepository;
     private final AlunoRepository alunoRepository;
     private final AulaRepository aulaRepository;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public PresencaService(
             PresencaRepository presencaRepository,
             AlunoRepository alunoRepository,
-            AulaRepository aulaRepository
+            AulaRepository aulaRepository, UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.presencaRepository = presencaRepository;
         this.alunoRepository = alunoRepository;
         this.aulaRepository = aulaRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -46,6 +48,9 @@ public class PresencaService {
                 );
 
         validarMesmaClasse(aluno, aula);
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(aula.getClasse());
 
         PresencaId id = new PresencaId(
                 dto.codaluno(),
@@ -73,10 +78,24 @@ public class PresencaService {
     }
 
     public List<PresencaResponseDTO> listarTodas() {
+
         return presencaRepository.findAll()
                 .stream()
+                .filter(this::podeAcessarPresenca)
                 .map(this::converterParaDTO)
                 .toList();
+    }
+
+    private boolean podeAcessarPresenca(
+            PresencaModel presenca
+    ) {
+
+        return presenca.getAula() != null
+                && presenca.getAula().getClasse() != null
+                && usuarioAutenticadoService
+                .podeAcessarClasse(
+                        presenca.getAula().getClasse()
+                );
     }
 
     public PresencaResponseDTO buscarPorId(
@@ -90,6 +109,8 @@ public class PresencaService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Presença não encontrada")
                 );
+
+        validarAcessoPresenca(presenca);
 
         return converterParaDTO(presenca);
     }
@@ -107,6 +128,8 @@ public class PresencaService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Presença não encontrada")
                 );
+
+        validarAcessoPresenca(presenca);
 
         // Não permitimos mudar aluno/aula através do PUT.
         if (!codaluno.equals(dto.codaluno())
@@ -138,6 +161,8 @@ public class PresencaService {
                         new ResourceNotFoundException("Presença não encontrada")
                 );
 
+        validarAcessoPresenca(presenca);
+
         presencaRepository.delete(presenca);
     }
 
@@ -159,6 +184,16 @@ public class PresencaService {
                     "O aluno não pertence à mesma classe da aula"
             );
         }
+    }
+
+    private void validarAcessoPresenca(
+            PresencaModel presenca
+    ) {
+
+        usuarioAutenticadoService
+                .validarAcessoAClasse(
+                        presenca.getAula().getClasse()
+                );
     }
 
     private PresencaResponseDTO converterParaDTO(

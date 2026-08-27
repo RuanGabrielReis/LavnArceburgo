@@ -160,8 +160,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/aulas/**")
                         .hasRole("SECRETARIA")
 
-                        // PRESENÇAS
-                        .requestMatchers("/api/presencas/**")
+                         // PRESENÇAS - consulta
+                        .requestMatchers(HttpMethod.GET, "/api/presencas/**")
+                        .hasAnyRole("SECRETARIA", "PROFESSOR")
+
+                        // PRESENÇAS - lançamento e alteração
+                        .requestMatchers(HttpMethod.POST, "/api/presencas/**")
+                        .hasRole("PROFESSOR")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/presencas/**")
+                        .hasRole("PROFESSOR")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/presencas/**")
                         .hasRole("PROFESSOR")
 
                         // ANOTAÇÕES
