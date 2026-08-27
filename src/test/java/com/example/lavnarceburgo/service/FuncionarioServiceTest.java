@@ -2,12 +2,14 @@ package com.example.lavnarceburgo.service;
 
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -191,25 +193,21 @@ class FuncionarioServiceTest {
     @Test
     void deveAtualizarFuncionarioComSucesso() {
 
-        FuncionarioRequestDTO dtoAtualizado =
-                new FuncionarioRequestDTO(
+        FuncionarioUpdateDTO dtoAtualizado =
+                new FuncionarioUpdateDTO(
                         "Professor Atualizado",
-                        "111.111.111-11",
-                        "35988888888",
-                        "MG111111",
-                        "Rua Nova, 200",
+                        "123.456.789-00",
+                        "35999999999",
+                        "MG123456",
+                        "Rua Atualizada",
                         "Arceburgo",
-                        "professor@teste.com",
+                        "atualizado@lavn.com",
                         Cargo.PROFESSOR,
-                        new BigDecimal("3500.00"),
-                        "123456"
+                        new BigDecimal("3500.00")
                 );
 
         when(funcionarioRepository.findById(1L))
                 .thenReturn(Optional.of(funcionario));
-
-        when(passwordEncoder.encode("123456"))
-                .thenReturn("$2a$10$senhaHashDeTeste");
 
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenReturn(usuario);
@@ -223,19 +221,19 @@ class FuncionarioServiceTest {
                         dtoAtualizado
                 );
 
+        assertNotNull(resposta);
         assertEquals(
                 "Professor Atualizado",
                 resposta.nome()
         );
 
-        assertEquals(
-                new BigDecimal("3500.00"),
-                resposta.salario()
-        );
-
         verify(usuarioRepository).save(usuario);
         verify(funcionarioRepository).save(funcionario);
+
+        verify(passwordEncoder, never())
+                .encode(anyString());
     }
+
 
     @Test
     void deveExcluirFuncionarioComSucesso() {
@@ -306,8 +304,8 @@ class FuncionarioServiceTest {
 
         funcionario.setCargo(Cargo.PROFESSOR);
 
-        FuncionarioRequestDTO dtoMaster =
-                new FuncionarioRequestDTO(
+        FuncionarioUpdateDTO dtoMaster =
+                new FuncionarioUpdateDTO(
                         usuario.getNome(),
                         usuario.getCpf(),
                         usuario.getTelefone(),
@@ -316,8 +314,7 @@ class FuncionarioServiceTest {
                         usuario.getCidade(),
                         usuario.getEmail(),
                         Cargo.MASTER,
-                        new BigDecimal("5000.00"),
-                        "novaSenha123"
+                        new BigDecimal("5000.00")
                 );
 
         when(funcionarioRepository.findById(1L))
@@ -370,8 +367,8 @@ class FuncionarioServiceTest {
 
         funcionario.setCargo(Cargo.MASTER);
 
-        FuncionarioRequestDTO dtoSecretaria =
-                new FuncionarioRequestDTO(
+        FuncionarioUpdateDTO dtoSecretaria =
+                new FuncionarioUpdateDTO(
                         usuario.getNome(),
                         usuario.getCpf(),
                         usuario.getTelefone(),
@@ -380,8 +377,7 @@ class FuncionarioServiceTest {
                         usuario.getCidade(),
                         usuario.getEmail(),
                         Cargo.SECRETARIA,
-                        new BigDecimal("5000.00"),
-                        "novaSenha123"
+                        new BigDecimal("5000.00")
                 );
 
         when(funcionarioRepository.findById(1L))
@@ -399,6 +395,68 @@ class FuncionarioServiceTest {
                 "O usuário MASTER não pode ter seu cargo alterado",
                 exception.getMessage()
         );
+
+        verify(funcionarioRepository, never())
+                .save(any(FuncionarioModel.class));
+    }
+
+    @Test
+    void deveAlterarSenhaDoFuncionarioComSucesso() {
+
+        FuncionarioSenhaDTO dtoSenha =
+                new FuncionarioSenhaDTO(
+                        "novaSenha123"
+                );
+
+        when(funcionarioRepository.findById(1L))
+                .thenReturn(Optional.of(funcionario));
+
+        when(passwordEncoder.encode("novaSenha123"))
+                .thenReturn("senhaHashNova");
+
+        funcionarioService.alterarSenha(
+                1L,
+                dtoSenha
+        );
+
+        assertEquals(
+                "senhaHashNova",
+                funcionario.getSenha()
+        );
+
+        verify(passwordEncoder)
+                .encode("novaSenha123");
+
+        verify(funcionarioRepository)
+                .save(funcionario);
+    }
+
+    @Test
+    void deveRetornarErroAoAlterarSenhaDeFuncionarioInexistente() {
+
+        FuncionarioSenhaDTO dtoSenha =
+                new FuncionarioSenhaDTO(
+                        "novaSenha123"
+                );
+
+        when(funcionarioRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> funcionarioService.alterarSenha(
+                        999L,
+                        dtoSenha
+                )
+        );
+
+        assertEquals(
+                "Funcionário não encontrado",
+                exception.getMessage()
+        );
+
+        verify(passwordEncoder, never())
+                .encode(anyString());
 
         verify(funcionarioRepository, never())
                 .save(any(FuncionarioModel.class));

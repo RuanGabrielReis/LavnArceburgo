@@ -5,11 +5,14 @@ import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
+import com.example.lavnarceburgo.model.enums.Cargo;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
 
 import java.util.List;
 
@@ -32,6 +35,12 @@ public class FuncionarioService {
 
     @Transactional
     public FuncionarioResponseDTO cadastrar(FuncionarioRequestDTO dto) {
+
+        if (dto.cargo() == Cargo.MASTER) {
+            throw new IllegalArgumentException(
+                    "Usuário MASTER não pode ser criado por este endpoint"
+            );
+        }
 
         if (usuarioRepository.existsByCpf(dto.cpf())) {
             throw new IllegalArgumentException(
@@ -91,13 +100,29 @@ public class FuncionarioService {
     @Transactional
     public FuncionarioResponseDTO atualizar(
             Long id,
-            FuncionarioRequestDTO dto
+            FuncionarioUpdateDTO dto
     ) {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Funcionário não encontrado")
                 );
+
+        if (funcionario.getCargo() == Cargo.MASTER
+                && dto.cargo() != Cargo.MASTER) {
+
+            throw new IllegalArgumentException(
+                    "O usuário MASTER não pode ter seu cargo alterado"
+            );
+        }
+
+        if (funcionario.getCargo() != Cargo.MASTER
+                && dto.cargo() == Cargo.MASTER) {
+
+            throw new IllegalArgumentException(
+                    "Não é permitido promover um funcionário para MASTER"
+            );
+        }
 
         UsuarioModel usuario = funcionario.getUsuario();
 
@@ -125,9 +150,6 @@ public class FuncionarioService {
 
         funcionario.setCargo(dto.cargo());
         funcionario.setSalario(dto.salario());
-        funcionario.setSenha(
-                passwordEncoder.encode(dto.senha())
-        );
 
         usuarioRepository.save(usuario);
         funcionario = funcionarioRepository.save(funcionario);
@@ -142,6 +164,12 @@ public class FuncionarioService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Funcionário não encontrado")
                 );
+
+        if (funcionario.getCargo() == Cargo.MASTER) {
+            throw new IllegalArgumentException(
+                    "O usuário MASTER não pode ser excluído"
+            );
+        }
 
         UsuarioModel usuario = funcionario.getUsuario();
 
@@ -167,5 +195,26 @@ public class FuncionarioService {
                 funcionario.getCargo(),
                 funcionario.getSalario()
         );
+    }
+
+    @Transactional
+    public void alterarSenha(
+            Long id,
+            FuncionarioSenhaDTO dto
+    ) {
+
+        FuncionarioModel funcionario =
+                funcionarioRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Funcionário não encontrado"
+                                )
+                        );
+
+        funcionario.setSenha(
+                passwordEncoder.encode(dto.senha())
+        );
+
+        funcionarioRepository.save(funcionario);
     }
 }
