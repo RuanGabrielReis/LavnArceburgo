@@ -4,7 +4,6 @@ import com.example.lavnarceburgo.dto.aluno.AlunoRequestDTO;
 import com.example.lavnarceburgo.dto.aluno.AlunoResponseDTO;
 import com.example.lavnarceburgo.service.AlunoService;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

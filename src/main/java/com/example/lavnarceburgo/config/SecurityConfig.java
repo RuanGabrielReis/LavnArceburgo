@@ -164,13 +164,13 @@ public class SecurityConfig {
 
                         // PRESENÇAS - lançamento e alteração
                         .requestMatchers(HttpMethod.POST, "/api/presencas/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
 
                         .requestMatchers(HttpMethod.PUT, "/api/presencas/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/presencas/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
 
                         // ANOTAÇÕES - consulta
                         .requestMatchers(HttpMethod.GET, "/api/anotacoes/**")
@@ -178,13 +178,13 @@ public class SecurityConfig {
 
                         // ANOTAÇÕES - professor
                         .requestMatchers(HttpMethod.POST, "/api/anotacoes/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
 
                         .requestMatchers(HttpMethod.PUT, "/api/anotacoes/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
 
                         .requestMatchers(HttpMethod.DELETE, "/api/anotacoes/**")
-                        .hasRole("PROFESSOR")
+                        .hasAnyRole("PROFESSOR", "MASTER")
                         // outras rotas exigem autenticação
                         .anyRequest()
                         .authenticated()

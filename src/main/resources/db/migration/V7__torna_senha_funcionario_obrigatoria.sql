@@ -1,0 +1,2 @@
+ALTER TABLE funcionario
+    MODIFY COLUMN senha VARCHAR(255) NOT NULL;

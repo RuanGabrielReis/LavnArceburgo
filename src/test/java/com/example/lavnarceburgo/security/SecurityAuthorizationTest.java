@@ -115,4 +115,62 @@ class SecurityAuthorizationTest {
                 )
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(roles = "MASTER")
+    void masterDevePoderConsultarFuncionarios() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/funcionarios")
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "MASTER")
+    void masterDevePoderAcessarCadastroDePresenca() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/presencas")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MASTER")
+    void masterDevePoderAcessarCadastroDeAnotacao() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/anotacoes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaNaoDeveCadastrarPresenca() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/presencas")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaNaoDeveCadastrarAnotacao() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/anotacoes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isForbidden());
+    }
 }
