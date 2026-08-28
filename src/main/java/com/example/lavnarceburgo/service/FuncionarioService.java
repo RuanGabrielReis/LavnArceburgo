@@ -70,7 +70,6 @@ public class FuncionarioService {
 
         funcionario.setUsuario(usuario);
         funcionario.setCargo(dto.cargo());
-        funcionario.setSalario(dto.salario());
         funcionario.setSenha(
                 passwordEncoder.encode(dto.senha())
         );
@@ -149,7 +148,6 @@ public class FuncionarioService {
         usuario.setEmail(dto.email());
 
         funcionario.setCargo(dto.cargo());
-        funcionario.setSalario(dto.salario());
 
         usuarioRepository.save(usuario);
         funcionario = funcionarioRepository.save(funcionario);
@@ -192,8 +190,7 @@ public class FuncionarioService {
                 usuario.getEndereco(),
                 usuario.getCidade(),
                 usuario.getEmail(),
-                funcionario.getCargo(),
-                funcionario.getSalario()
+                funcionario.getCargo()
         );
     }
 

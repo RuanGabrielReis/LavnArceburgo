@@ -29,11 +29,7 @@ public record FuncionarioUpdateDTO(
         String email,
 
         @NotNull
-        Cargo cargo,
-
-        @NotNull
-        @PositiveOrZero
-        BigDecimal salario
+        Cargo cargo
 
 ) {
 }

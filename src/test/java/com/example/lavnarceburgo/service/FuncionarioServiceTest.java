@@ -56,7 +56,6 @@ class FuncionarioServiceTest {
                 "Arceburgo",
                 "professor@teste.com",
                 Cargo.PROFESSOR,
-                new BigDecimal("3000.00"),
                 "123456"
         );
 
@@ -74,7 +73,6 @@ class FuncionarioServiceTest {
         funcionario.setCodfuncionario(1L);
         funcionario.setUsuario(usuario);
         funcionario.setCargo(Cargo.PROFESSOR);
-        funcionario.setSalario(new BigDecimal("3000.00"));
     }
 
     @Test
@@ -107,7 +105,6 @@ class FuncionarioServiceTest {
         assertEquals(1L, resposta.codfuncionario());
         assertEquals("Professor Teste", resposta.nome());
         assertEquals(Cargo.PROFESSOR, resposta.cargo());
-        assertEquals(new BigDecimal("3000.00"), resposta.salario());
 
         verify(usuarioRepository).save(any(UsuarioModel.class));
         verify(funcionarioRepository).save(any(FuncionarioModel.class));
@@ -202,8 +199,7 @@ class FuncionarioServiceTest {
                         "Rua Atualizada",
                         "Arceburgo",
                         "atualizado@lavn.com",
-                        Cargo.PROFESSOR,
-                        new BigDecimal("3500.00")
+                        Cargo.PROFESSOR
                 );
 
         when(funcionarioRepository.findById(1L))
@@ -281,7 +277,6 @@ class FuncionarioServiceTest {
                         "Arceburgo",
                         "master@teste.com",
                         Cargo.MASTER,
-                        new BigDecimal("5000.00"),
                         "master123"
                 );
 
@@ -313,8 +308,7 @@ class FuncionarioServiceTest {
                         usuario.getEndereco(),
                         usuario.getCidade(),
                         usuario.getEmail(),
-                        Cargo.MASTER,
-                        new BigDecimal("5000.00")
+                        Cargo.MASTER
                 );
 
         when(funcionarioRepository.findById(1L))
@@ -376,8 +370,7 @@ class FuncionarioServiceTest {
                         usuario.getEndereco(),
                         usuario.getCidade(),
                         usuario.getEmail(),
-                        Cargo.SECRETARIA,
-                        new BigDecimal("5000.00")
+                        Cargo.SECRETARIA
                 );
 
         when(funcionarioRepository.findById(1L))

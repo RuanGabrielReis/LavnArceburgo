@@ -14,7 +14,6 @@ public record FuncionarioResponseDTO(
         String endereco,
         String cidade,
         String email,
-        Cargo cargo,
-        BigDecimal salario
+        Cargo cargo
 ) {
 }

@@ -32,10 +32,6 @@ public record FuncionarioRequestDTO(
         @NotNull(message = "O cargo é obrigatório")
         Cargo cargo,
 
-        @NotNull(message = "O salário é obrigatório")
-        @PositiveOrZero(message = "O salário não pode ser negativo")
-        BigDecimal salario,
-
         @NotBlank(message = "A senha é obrigatória")
         @Size(min = 6, message = "A senha deve possuir no mínimo 6 caracteres")
                 String senha

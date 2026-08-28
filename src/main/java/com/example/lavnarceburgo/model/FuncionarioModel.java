@@ -25,14 +25,6 @@ public class FuncionarioModel {
     @Column(name = "cargo", nullable = false)
     private Cargo cargo;
 
-    @Column(
-            name = "salario",
-            nullable = false,
-            precision = 10,
-            scale = 2
-    )
-    private BigDecimal salario;
-
     @Column(name = "senha", nullable = false)
     private String senha;
 }
