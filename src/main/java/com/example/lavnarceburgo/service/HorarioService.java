@@ -36,6 +36,8 @@ public class HorarioService {
                         new ResourceNotFoundException("Classe não encontrada")
                 );
 
+        validarConflitos(dto, classe, null);
+
         HorarioModel horario = new HorarioModel();
 
         horario.setDuracaoaula(dto.duracaoaula());
@@ -111,6 +113,8 @@ public class HorarioService {
                         new ResourceNotFoundException("Classe não encontrada")
                 );
 
+        validarConflitos(dto, classe, id);
+
         horario.setDuracaoaula(dto.duracaoaula());
         horario.setClasse(classe);
         horario.setSala(dto.sala());
@@ -146,5 +150,92 @@ public class HorarioService {
                 horario.getDiaSemana(),
                 horario.getHoraInicio()
         );
+    }
+
+    private void validarConflitos(
+            HorarioRequestDTO dto,
+            ClasseModel novaClasse,
+            Long horarioIgnorarId
+    ) {
+
+        var horariosDoDia =
+                horarioRepository.findByDiaSemana(
+                        dto.diaSemana()
+                );
+
+        var novoInicio = dto.horaInicio();
+
+        var novoFim = novoInicio.plusMinutes(
+                dto.duracaoaula()
+        );
+
+        for (HorarioModel horarioExistente : horariosDoDia) {
+
+            // No PUT, ignora o próprio horário sendo atualizado.
+            if (horarioIgnorarId != null
+                    && horarioIgnorarId.equals(
+                    horarioExistente.getCodhorario()
+            )) {
+                continue;
+            }
+
+            var inicioExistente =
+                    horarioExistente.getHoraInicio();
+
+            var fimExistente =
+                    inicioExistente.plusMinutes(
+                            horarioExistente.getDuracaoaula()
+                    );
+
+            boolean horariosSobrepostos =
+                    novoInicio.isBefore(fimExistente)
+                            && novoFim.isAfter(inicioExistente);
+
+            if (!horariosSobrepostos) {
+                continue;
+            }
+
+            // MESMA TURMA
+            if (horarioExistente
+                    .getClasse()
+                    .getCodclasse()
+                    .equals(novaClasse.getCodclasse())) {
+
+                throw new IllegalArgumentException(
+                        "A classe já possui outro horário neste período"
+                );
+            }
+
+            // MESMA SALA
+            if (horarioExistente.getSala() != null
+                    && horarioExistente.getSala()
+                    .trim()
+                    .equalsIgnoreCase(
+                            dto.sala().trim()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "A sala já está ocupada neste período"
+                );
+            }
+
+            // MESMO PROFESSOR
+            if (horarioExistente.getClasse().getProfessor() != null
+                    && novaClasse.getProfessor() != null
+                    && horarioExistente
+                    .getClasse()
+                    .getProfessor()
+                    .getCodfuncionario()
+                    .equals(
+                            novaClasse
+                                    .getProfessor()
+                                    .getCodfuncionario()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "O professor já possui outra aula neste período"
+                );
+            }
+        }
     }
 }

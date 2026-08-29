@@ -7,6 +7,7 @@ import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.model.HorarioModel;
 import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.HorarioRepository;
+import com.example.lavnarceburgo.model.FuncionarioModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -268,5 +269,180 @@ class HorarioServiceTest {
                 "Você não possui acesso a esta turma",
                 exception.getMessage()
         );
+    }
+
+    @Test
+    void deveImpedirConflitoDeHorarioDaMesmaClasse() {
+
+        HorarioRequestDTO dtoConflito = new HorarioRequestDTO(
+                60,
+                1L,
+                "Sala 2",
+                DayOfWeek.MONDAY,
+                LocalTime.of(19, 30)
+        );
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(horario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> horarioService.cadastrar(dtoConflito)
+        );
+
+        assertEquals(
+                "A classe já possui outro horário neste período",
+                exception.getMessage()
+        );
+
+        verify(horarioRepository, never())
+                .save(any(HorarioModel.class));
+    }
+
+    @Test
+    void deveImpedirConflitoDeSala() {
+
+        ClasseModel outraClasse = new ClasseModel();
+        outraClasse.setCodclasse(2L);
+        outraClasse.setNivel("BASICO");
+
+        HorarioRequestDTO dtoConflito = new HorarioRequestDTO(
+                60,
+                2L,
+                "Sala 1",
+                DayOfWeek.MONDAY,
+                LocalTime.of(19, 30)
+        );
+
+        when(classeRepository.findById(2L))
+                .thenReturn(Optional.of(outraClasse));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(horario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> horarioService.cadastrar(dtoConflito)
+        );
+
+        assertEquals(
+                "A sala já está ocupada neste período",
+                exception.getMessage()
+        );
+
+        verify(horarioRepository, never())
+                .save(any(HorarioModel.class));
+    }
+
+    @Test
+    void deveImpedirConflitoDeHorarioDoMesmoProfessor() {
+
+        FuncionarioModel professor = new FuncionarioModel();
+        professor.setCodfuncionario(10L);
+
+        classe.setProfessor(professor);
+
+        ClasseModel outraClasse = new ClasseModel();
+        outraClasse.setCodclasse(2L);
+        outraClasse.setNivel("BASICO");
+        outraClasse.setProfessor(professor);
+
+        HorarioRequestDTO dtoConflito = new HorarioRequestDTO(
+                60,
+                2L,
+                "Sala 2",
+                DayOfWeek.MONDAY,
+                LocalTime.of(19, 30)
+        );
+
+        when(classeRepository.findById(2L))
+                .thenReturn(Optional.of(outraClasse));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(horario));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> horarioService.cadastrar(dtoConflito)
+        );
+
+        assertEquals(
+                "O professor já possui outra aula neste período",
+                exception.getMessage()
+        );
+
+        verify(horarioRepository, never())
+                .save(any(HorarioModel.class));
+    }
+
+    @Test
+    void deveIgnorarProprioHorarioAoAtualizar() {
+
+        HorarioRequestDTO dtoAtualizado = new HorarioRequestDTO(
+                90,
+                1L,
+                "Sala 1",
+                DayOfWeek.MONDAY,
+                LocalTime.of(19, 0)
+        );
+
+        when(horarioRepository.findById(1L))
+                .thenReturn(Optional.of(horario));
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(horario));
+
+        when(horarioRepository.save(any(HorarioModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        HorarioResponseDTO resposta = assertDoesNotThrow(
+                () -> horarioService.atualizar(
+                        1L,
+                        dtoAtualizado
+                )
+        );
+
+        assertNotNull(resposta);
+
+        verify(horarioRepository)
+                .save(horario);
+    }
+
+    @Test
+    void devePermitirHorariosConsecutivos() {
+
+        HorarioRequestDTO dtoConsecutivo = new HorarioRequestDTO(
+                60,
+                1L,
+                "Sala 1",
+                DayOfWeek.MONDAY,
+                LocalTime.of(20, 30)
+        );
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(horario));
+
+        when(horarioRepository.save(any(HorarioModel.class)))
+                .thenAnswer(invocation -> {
+                    HorarioModel salvo = invocation.getArgument(0);
+                    salvo.setCodhorario(2L);
+                    return salvo;
+                });
+
+        HorarioResponseDTO resposta = assertDoesNotThrow(
+                () -> horarioService.cadastrar(dtoConsecutivo)
+        );
+
+        assertNotNull(resposta);
+        assertEquals(LocalTime.of(20, 30), resposta.horaInicio());
     }
 }
