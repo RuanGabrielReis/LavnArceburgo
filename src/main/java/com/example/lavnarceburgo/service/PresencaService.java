@@ -68,7 +68,6 @@ public class PresencaService {
         presenca.setId(id);
         presenca.setAluno(aluno);
         presenca.setAula(aula);
-        presenca.setCodclasse(aluno.getClasse().getCodclasse());
         presenca.setPresente(dto.presente());
         presenca.setObservacao(dto.observacao());
 
@@ -204,7 +203,9 @@ public class PresencaService {
                 presenca.getAluno().getCodaluno(),
                 presenca.getAluno().getUsuario().getNome(),
                 presenca.getAula().getCodaula(),
-                presenca.getCodclasse(),
+                presenca.getAula()
+                        .getClasse()
+                        .getCodclasse(),
                 presenca.getAula().getClasse().getNivel(),
                 presenca.getPresente(),
                 presenca.getObservacao()

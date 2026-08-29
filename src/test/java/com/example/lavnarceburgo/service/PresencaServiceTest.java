@@ -111,7 +111,6 @@ class PresencaServiceTest {
 
         presenca.setAluno(aluno);
         presenca.setAula(aula);
-        presenca.setCodclasse(1L);
         presenca.setPresente(true);
         presenca.setObservacao("Presente");
 
@@ -139,7 +138,6 @@ class PresencaServiceTest {
         presenca.setId(id);
         presenca.setAluno(aluno);
         presenca.setAula(aula);
-        presenca.setCodclasse(1L);
         presenca.setPresente(true);
         presenca.setObservacao("Presente");
 
@@ -174,7 +172,6 @@ class PresencaServiceTest {
         presenca.setId(id);
         presenca.setAluno(aluno);
         presenca.setAula(aula);
-        presenca.setCodclasse(1L);
         presenca.setPresente(true);
 
         when(presencaRepository.findById(id))

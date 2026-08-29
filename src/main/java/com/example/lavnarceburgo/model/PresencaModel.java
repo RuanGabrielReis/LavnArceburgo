@@ -21,9 +21,6 @@ public class PresencaModel {
     @JoinColumn(name = "codaula")
     private AulaModel aula;
 
-    @Column(name = "codclasse", nullable = false)
-    private Long codclasse;
-
     @Column(name = "presente", nullable = false)
     private Boolean presente;
 

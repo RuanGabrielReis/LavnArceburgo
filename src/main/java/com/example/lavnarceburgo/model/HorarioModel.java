@@ -23,7 +23,7 @@ public class HorarioModel {
     @JoinColumn(name = "codclasse", nullable = false)
     private ClasseModel classe;
 
-    @Column(name = "sala")
+    @Column(name = "sala", nullable = false)
     private String sala;
 
     @Enumerated(EnumType.STRING)

@@ -18,6 +18,6 @@ public class    AlunoModel {
     private UsuarioModel usuario;
 
     @ManyToOne
-    @JoinColumn(name = "codclasse")
+    @JoinColumn(name = "codclasse", nullable = false)
     private ClasseModel classe;
 }

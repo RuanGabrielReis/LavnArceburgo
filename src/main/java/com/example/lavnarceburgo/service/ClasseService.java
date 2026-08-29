@@ -8,6 +8,8 @@ import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
 import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
+import com.example.lavnarceburgo.model.HorarioModel;
+import com.example.lavnarceburgo.repository.HorarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +21,16 @@ public class ClasseService {
     private final ClasseRepository classeRepository;
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioAutenticadoService usuarioAutenticadoService;
+    private final HorarioRepository horarioRepository;
 
     public ClasseService(
             ClasseRepository classeRepository,
-            FuncionarioRepository funcionarioRepository, UsuarioAutenticadoService usuarioAutenticadoService
+            FuncionarioRepository funcionarioRepository, UsuarioAutenticadoService usuarioAutenticadoService, HorarioRepository horarioRepository
     ) {
         this.classeRepository = classeRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioAutenticadoService = usuarioAutenticadoService;
+        this.horarioRepository = horarioRepository;
     }
 
     @Transactional
@@ -83,6 +87,11 @@ public class ClasseService {
 
         FuncionarioModel professor = buscarProfessor(dto.codprofessor());
 
+        validarConflitosAoTrocarProfessor(
+                classe,
+                professor
+        );
+
         classe.setNivel(dto.nivel());
         classe.setProfessor(professor);
 
@@ -130,5 +139,90 @@ public class ClasseService {
                         ? professor.getUsuario().getNome()
                         : null
         );
+    }
+
+    private void validarConflitosAoTrocarProfessor(
+            ClasseModel classe,
+            FuncionarioModel novoProfessor
+    ) {
+
+        if (classe.getProfessor() != null
+                && classe.getProfessor()
+                .getCodfuncionario()
+                .equals(
+                        novoProfessor.getCodfuncionario()
+                )) {
+
+            return;
+        }
+
+        List<HorarioModel> horariosDaClasse =
+                horarioRepository.findByClasseCodclasse(
+                        classe.getCodclasse()
+                );
+
+        for (HorarioModel horarioDaClasse : horariosDaClasse) {
+
+            List<HorarioModel> horariosDoDia =
+                    horarioRepository.findByDiaSemana(
+                            horarioDaClasse.getDiaSemana()
+                    );
+
+            var inicioClasse =
+                    horarioDaClasse.getHoraInicio();
+
+            var fimClasse =
+                    inicioClasse.plusMinutes(
+                            horarioDaClasse.getDuracaoaula()
+                    );
+
+            for (HorarioModel outroHorario : horariosDoDia) {
+
+                // Ignora horários da própria classe
+                if (outroHorario
+                        .getClasse()
+                        .getCodclasse()
+                        .equals(classe.getCodclasse())) {
+
+                    continue;
+                }
+
+                if (outroHorario.getClasse().getProfessor() == null) {
+                    continue;
+                }
+
+                boolean pertenceAoNovoProfessor =
+                        outroHorario
+                                .getClasse()
+                                .getProfessor()
+                                .getCodfuncionario()
+                                .equals(
+                                        novoProfessor
+                                                .getCodfuncionario()
+                                );
+
+                if (!pertenceAoNovoProfessor) {
+                    continue;
+                }
+
+                var outroInicio =
+                        outroHorario.getHoraInicio();
+
+                var outroFim =
+                        outroInicio.plusMinutes(
+                                outroHorario.getDuracaoaula()
+                        );
+
+                boolean sobrepostos =
+                        inicioClasse.isBefore(outroFim)
+                                && fimClasse.isAfter(outroInicio);
+
+                if (sobrepostos) {
+                    throw new IllegalArgumentException(
+                            "O novo professor já possui outra aula neste período"
+                    );
+                }
+            }
+        }
     }
 }

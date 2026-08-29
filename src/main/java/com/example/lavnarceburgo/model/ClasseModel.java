@@ -17,6 +17,6 @@ public class ClasseModel {
     private String nivel;
 
     @ManyToOne
-    @JoinColumn(name = "codprofessor")
+    @JoinColumn(name = "codprofessor", nullable = false)
     private FuncionarioModel professor;
 }
