@@ -173,4 +173,72 @@ class SecurityAuthorizationTest {
                 )
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(roles = "MASTER")
+    void masterDevePoderCadastrarFuncionario() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/funcionarios")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaDevePoderCadastrarAluno() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/alunos")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "PROFESSOR")
+    void professorDevePoderCadastrarPresenca() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/presencas")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "PROFESSOR")
+    void professorNaoDeveCadastrarClasse() throws Exception {
+
+        mockMvc.perform(
+                        post("/api/classes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaDeveConsultarPresencas() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/presencas")
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "SECRETARIA")
+    void secretariaDeveConsultarAnotacoes() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/anotacoes")
+                )
+                .andExpect(status().isOk());
+    }
 }
