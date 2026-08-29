@@ -53,14 +53,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email = jwtService.extrairEmail(token);
+        Long codFuncionario =
+                jwtService.extrairCodFuncionario(token);
 
-        FuncionarioModel funcionario = funcionarioRepository
-                .findByUsuario_Email(email)
-                .orElse(null);
+        FuncionarioModel funcionario =
+                funcionarioRepository
+                        .findById(codFuncionario)
+                        .orElse(null);
 
-        if (funcionario != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (funcionario != null
+                && SecurityContextHolder
+                .getContext()
+                .getAuthentication() == null) {
+
+            String emailAtual =
+                    funcionario.getUsuario().getEmail();
 
             SimpleGrantedAuthority autoridade =
                     new SimpleGrantedAuthority(
@@ -69,7 +76,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken autenticacao =
                     new UsernamePasswordAuthenticationToken(
-                            email,
+                            emailAtual,
                             null,
                             List.of(autoridade)
                     );

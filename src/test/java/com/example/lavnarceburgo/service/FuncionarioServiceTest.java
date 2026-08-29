@@ -503,4 +503,47 @@ class FuncionarioServiceTest {
 
         verify(funcionarioRepository).delete(funcionario);
     }
+
+    @Test
+    void deveImpedirAlteracaoDeCargoDeProfessorComClassesVinculadas() {
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setCpf("12345678900");
+        usuario.setEmail("professor@email.com");
+
+        FuncionarioModel funcionario = new FuncionarioModel();
+        funcionario.setCodfuncionario(2L);
+        funcionario.setCargo(Cargo.PROFESSOR);
+        funcionario.setUsuario(usuario);
+
+        FuncionarioUpdateDTO dto = new FuncionarioUpdateDTO(
+                "Professor Teste",
+                "12345678900",
+                "35999999999",
+                "MG123456",
+                "Rua Teste",
+                "Arceburgo",
+                "professor@email.com",
+                Cargo.SECRETARIA
+        );
+
+        when(funcionarioRepository.findById(2L))
+                .thenReturn(Optional.of(funcionario));
+
+        when(classeRepository.existsByProfessorCodfuncionario(2L))
+                .thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.atualizar(2L, dto)
+        );
+
+        assertEquals(
+                "Não é possível alterar o cargo do professor enquanto houver classes vinculadas",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .save(any(FuncionarioModel.class));
+    }
 }

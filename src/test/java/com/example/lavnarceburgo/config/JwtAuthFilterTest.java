@@ -79,12 +79,10 @@ class JwtAuthFilterTest {
         when(jwtService.tokenValido(token))
                 .thenReturn(true);
 
-        when(jwtService.extrairEmail(token))
-                .thenReturn("professor@lavn.com");
+        when(jwtService.extrairCodFuncionario(token))
+                .thenReturn(1L);
 
-        when(funcionarioRepository.findByUsuario_Email(
-                "professor@lavn.com"
-        ))
+        when(funcionarioRepository.findById(1L))
                 .thenReturn(Optional.of(funcionario));
 
         jwtAuthFilter.doFilterInternal(
@@ -114,6 +112,15 @@ class JwtAuthFilterTest {
                                         .equals("ROLE_PROFESSOR")
                         )
         );
+
+        verify(jwtService)
+                .tokenValido(token);
+
+        verify(jwtService)
+                .extrairCodFuncionario(token);
+
+        verify(funcionarioRepository)
+                .findById(1L);
 
         verify(filterChain)
                 .doFilter(request, response);
@@ -171,15 +178,15 @@ class JwtAuthFilterTest {
 
         assertNull(authentication);
 
-        verify(filterChain)
-                .doFilter(request, response);
-
         verify(jwtService)
                 .tokenValido(token);
 
         verify(jwtService, never())
-                .extrairEmail(anyString());
+                .extrairCodFuncionario(anyString());
 
         verifyNoInteractions(funcionarioRepository);
+
+        verify(filterChain)
+                .doFilter(request, response);
     }
 }

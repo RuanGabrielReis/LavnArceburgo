@@ -83,4 +83,15 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    public Long extrairCodFuncionario(String token) {
+
+        Number codFuncionario = extrairClaims(token)
+                .get(
+                        "codfuncionario",
+                        Number.class
+                );
+
+        return codFuncionario.longValue();
+    }
 }

@@ -150,6 +150,14 @@ public class FuncionarioService {
         usuario.setCidade(dto.cidade());
         usuario.setEmail(dto.email());
 
+        if (dto.cargo() != Cargo.PROFESSOR
+                && classeRepository.existsByProfessorCodfuncionario(id)) {
+
+            throw new IllegalArgumentException(
+                    "Não é possível alterar o cargo do professor enquanto houver classes vinculadas"
+            );
+        }
+
         funcionario.setCargo(dto.cargo());
 
         usuarioRepository.save(usuario);
