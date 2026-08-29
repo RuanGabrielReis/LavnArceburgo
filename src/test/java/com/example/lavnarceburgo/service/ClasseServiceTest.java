@@ -9,6 +9,13 @@ import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
 import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
+import com.example.lavnarceburgo.model.HorarioModel;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.util.List;
+
+import com.example.lavnarceburgo.repository.HorarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +40,9 @@ class ClasseServiceTest {
 
     @Mock
     private UsuarioAutenticadoService usuarioAutenticadoService;
+
+    @Mock
+    private HorarioRepository horarioRepository;
 
     @InjectMocks
     private ClasseService classeService;
@@ -213,5 +223,143 @@ class ClasseServiceTest {
 
         verify(classeRepository, never())
                 .delete(any(ClasseModel.class));
+    }
+
+    @Test
+    void devePermitirTrocaDeProfessorSemConflitoDeHorario() {
+
+        UsuarioModel usuarioNovoProfessor = new UsuarioModel();
+        usuarioNovoProfessor.setNome("Novo Professor");
+
+        FuncionarioModel novoProfessor = new FuncionarioModel();
+        novoProfessor.setCodfuncionario(2L);
+        novoProfessor.setCargo(Cargo.PROFESSOR);
+        novoProfessor.setUsuario(usuarioNovoProfessor);
+
+        ClasseModel outraClasse = new ClasseModel();
+        outraClasse.setCodclasse(2L);
+        outraClasse.setProfessor(novoProfessor);
+
+        HorarioModel horarioDaClasse = new HorarioModel();
+        horarioDaClasse.setCodhorario(1L);
+        horarioDaClasse.setClasse(classe);
+        horarioDaClasse.setDiaSemana(DayOfWeek.MONDAY);
+        horarioDaClasse.setHoraInicio(LocalTime.of(19, 0));
+        horarioDaClasse.setDuracaoaula(60);
+
+        HorarioModel outroHorario = new HorarioModel();
+        outroHorario.setCodhorario(2L);
+        outroHorario.setClasse(outraClasse);
+        outroHorario.setDiaSemana(DayOfWeek.MONDAY);
+        outroHorario.setHoraInicio(LocalTime.of(20, 0));
+        outroHorario.setDuracaoaula(60);
+
+        ClasseRequestDTO dto =
+                new ClasseRequestDTO(
+                        "INTERMEDIARIO",
+                        2L
+                );
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(funcionarioRepository.findById(2L))
+                .thenReturn(Optional.of(novoProfessor));
+
+        when(horarioRepository.findByClasseCodclasse(1L))
+                .thenReturn(List.of(horarioDaClasse));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(
+                        horarioDaClasse,
+                        outroHorario
+                ));
+
+        when(classeRepository.save(any(ClasseModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClasseResponseDTO resposta =
+                classeService.atualizar(
+                        1L,
+                        dto
+                );
+
+        assertNotNull(resposta);
+
+        assertEquals(
+                2L,
+                resposta.codprofessor()
+        );
+
+        verify(classeRepository)
+                .save(classe);
+    }
+
+    @Test
+    void deveImpedirTrocaDeProfessorComConflitoDeHorario() {
+
+        UsuarioModel usuarioNovoProfessor = new UsuarioModel();
+        usuarioNovoProfessor.setNome("Novo Professor");
+
+        FuncionarioModel novoProfessor = new FuncionarioModel();
+        novoProfessor.setCodfuncionario(2L);
+        novoProfessor.setCargo(Cargo.PROFESSOR);
+        novoProfessor.setUsuario(usuarioNovoProfessor);
+
+        ClasseModel outraClasse = new ClasseModel();
+        outraClasse.setCodclasse(2L);
+        outraClasse.setProfessor(novoProfessor);
+
+        HorarioModel horarioDaClasse = new HorarioModel();
+        horarioDaClasse.setCodhorario(1L);
+        horarioDaClasse.setClasse(classe);
+        horarioDaClasse.setDiaSemana(DayOfWeek.MONDAY);
+        horarioDaClasse.setHoraInicio(LocalTime.of(19, 0));
+        horarioDaClasse.setDuracaoaula(60);
+
+        HorarioModel horarioConflitante = new HorarioModel();
+        horarioConflitante.setCodhorario(2L);
+        horarioConflitante.setClasse(outraClasse);
+        horarioConflitante.setDiaSemana(DayOfWeek.MONDAY);
+        horarioConflitante.setHoraInicio(LocalTime.of(19, 30));
+        horarioConflitante.setDuracaoaula(60);
+
+        ClasseRequestDTO dto =
+                new ClasseRequestDTO(
+                        "INTERMEDIARIO",
+                        2L
+                );
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(funcionarioRepository.findById(2L))
+                .thenReturn(Optional.of(novoProfessor));
+
+        when(horarioRepository.findByClasseCodclasse(1L))
+                .thenReturn(List.of(horarioDaClasse));
+
+        when(horarioRepository.findByDiaSemana(DayOfWeek.MONDAY))
+                .thenReturn(List.of(
+                        horarioDaClasse,
+                        horarioConflitante
+                ));
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> classeService.atualizar(
+                                1L,
+                                dto
+                        )
+                );
+
+        assertEquals(
+                "O novo professor já possui outra aula neste período",
+                exception.getMessage()
+        );
+
+        verify(classeRepository, never())
+                .save(any(ClasseModel.class));
     }
 }
