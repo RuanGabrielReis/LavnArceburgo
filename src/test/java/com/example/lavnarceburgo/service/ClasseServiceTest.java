@@ -7,6 +7,7 @@ import com.example.lavnarceburgo.model.ClasseModel;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
+import com.example.lavnarceburgo.repository.AlunoRepository;
 import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.model.HorarioModel;
@@ -43,6 +44,9 @@ class ClasseServiceTest {
 
     @Mock
     private HorarioRepository horarioRepository;
+
+    @Mock
+    private AlunoRepository alunoRepository;
 
     @InjectMocks
     private ClasseService classeService;
@@ -361,5 +365,42 @@ class ClasseServiceTest {
 
         verify(classeRepository, never())
                 .save(any(ClasseModel.class));
+    }
+
+    @Test
+    void deveImpedirExclusaoDeClasseComAlunos() {
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(alunoRepository.existsByClasseCodclasse(1L))
+                .thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> classeService.excluir(1L)
+        );
+
+        assertEquals(
+                "Não é possível excluir a classe enquanto houver alunos vinculados",
+                exception.getMessage()
+        );
+
+        verify(classeRepository, never())
+                .delete(any(ClasseModel.class));
+    }
+
+    @Test
+    void deveExcluirClasseSemAlunos() {
+
+        when(classeRepository.findById(1L))
+                .thenReturn(Optional.of(classe));
+
+        when(alunoRepository.existsByClasseCodclasse(1L))
+                .thenReturn(false);
+
+        classeService.excluir(1L);
+
+        verify(classeRepository).delete(classe);
     }
 }

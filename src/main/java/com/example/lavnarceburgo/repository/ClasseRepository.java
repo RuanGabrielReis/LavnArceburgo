@@ -10,4 +10,6 @@ public interface ClasseRepository extends JpaRepository<ClasseModel, Long> {
     List<ClasseModel> findByProfessorCodfuncionario(Long codprofessor);
 
     List<ClasseModel> findByNivel(String nivel);
+
+    boolean existsByProfessorCodfuncionario(Long codfuncionario);
 }

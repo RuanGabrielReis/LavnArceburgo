@@ -10,6 +10,7 @@ import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.model.HorarioModel;
 import com.example.lavnarceburgo.repository.HorarioRepository;
+import com.example.lavnarceburgo.repository.AlunoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +23,17 @@ public class ClasseService {
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioAutenticadoService usuarioAutenticadoService;
     private final HorarioRepository horarioRepository;
+    private final AlunoRepository alunoRepository;
 
     public ClasseService(
             ClasseRepository classeRepository,
-            FuncionarioRepository funcionarioRepository, UsuarioAutenticadoService usuarioAutenticadoService, HorarioRepository horarioRepository
+            FuncionarioRepository funcionarioRepository, UsuarioAutenticadoService usuarioAutenticadoService, HorarioRepository horarioRepository, AlunoRepository alunoRepository
     ) {
         this.classeRepository = classeRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioAutenticadoService = usuarioAutenticadoService;
         this.horarioRepository = horarioRepository;
+        this.alunoRepository = alunoRepository;
     }
 
     @Transactional
@@ -105,8 +108,16 @@ public class ClasseService {
 
         ClasseModel classe = classeRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Classe não encontrada")
+                        new ResourceNotFoundException(
+                                "Classe não encontrada"
+                        )
                 );
+
+        if (alunoRepository.existsByClasseCodclasse(id)) {
+            throw new IllegalArgumentException(
+                    "Não é possível excluir a classe enquanto houver alunos vinculados"
+            );
+        }
 
         classeRepository.delete(classe);
     }

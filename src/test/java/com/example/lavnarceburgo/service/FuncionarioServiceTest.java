@@ -7,6 +7,7 @@ import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
+import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
@@ -39,6 +40,9 @@ class FuncionarioServiceTest {
 
     @InjectMocks
     private FuncionarioService funcionarioService;
+
+    @Mock
+    private ClasseRepository classeRepository;
 
     private FuncionarioRequestDTO dto;
     private UsuarioModel usuario;
@@ -453,5 +457,50 @@ class FuncionarioServiceTest {
 
         verify(funcionarioRepository, never())
                 .save(any(FuncionarioModel.class));
+    }
+
+    @Test
+    void deveImpedirExclusaoDeProfessorComClassesVinculadas() {
+
+        FuncionarioModel funcionario = new FuncionarioModel();
+        funcionario.setCodfuncionario(2L);
+        funcionario.setCargo(Cargo.PROFESSOR);
+
+        when(funcionarioRepository.findById(2L))
+                .thenReturn(Optional.of(funcionario));
+
+        when(classeRepository.existsByProfessorCodfuncionario(2L))
+                .thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> funcionarioService.excluir(2L)
+        );
+
+        assertEquals(
+                "Não é possível excluir o professor enquanto houver classes vinculadas",
+                exception.getMessage()
+        );
+
+        verify(funcionarioRepository, never())
+                .delete(any(FuncionarioModel.class));
+    }
+
+    @Test
+    void deveExcluirFuncionarioSemClassesVinculadas() {
+
+        FuncionarioModel funcionario = new FuncionarioModel();
+        funcionario.setCodfuncionario(2L);
+        funcionario.setCargo(Cargo.PROFESSOR);
+
+        when(funcionarioRepository.findById(2L))
+                .thenReturn(Optional.of(funcionario));
+
+        when(classeRepository.existsByProfessorCodfuncionario(2L))
+                .thenReturn(false);
+
+        funcionarioService.excluir(2L);
+
+        verify(funcionarioRepository).delete(funcionario);
     }
 }

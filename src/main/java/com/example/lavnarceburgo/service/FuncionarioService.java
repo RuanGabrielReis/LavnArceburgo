@@ -6,6 +6,7 @@ import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
 import com.example.lavnarceburgo.model.enums.Cargo;
+import com.example.lavnarceburgo.repository.ClasseRepository;
 import com.example.lavnarceburgo.repository.FuncionarioRepository;
 import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,15 +23,17 @@ public class FuncionarioService {
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ClasseRepository classeRepository;
 
     public FuncionarioService(
             FuncionarioRepository funcionarioRepository,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder, ClasseRepository classeRepository
     ) {
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.classeRepository = classeRepository;
     }
 
     @Transactional
@@ -170,6 +173,12 @@ public class FuncionarioService {
         }
 
         UsuarioModel usuario = funcionario.getUsuario();
+
+        if (classeRepository.existsByProfessorCodfuncionario(id)) {
+            throw new IllegalArgumentException(
+                    "Não é possível excluir o professor enquanto houver classes vinculadas"
+            );
+        }
 
         funcionarioRepository.delete(funcionario);
         usuarioRepository.delete(usuario);
