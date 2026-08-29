@@ -14,6 +14,7 @@ public record HorarioRequestDTO(
         Integer duracaoaula,
 
         @NotNull(message = "A classe é obrigatória")
+        @Positive(message = "O código da classe deve ser maior que zero")
         Long codclasse,
 
         @NotBlank(message = "A sala é obrigatória")

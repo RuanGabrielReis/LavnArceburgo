@@ -3,6 +3,7 @@ package com.example.lavnarceburgo.dto.aluno;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public record AlunoRequestDTO(
 
@@ -25,6 +26,7 @@ public record AlunoRequestDTO(
         String email,
 
         @NotNull(message = "A classe é obrigatória")
+        @Positive(message = "O código da classe deve ser maior que zero")
         Long codclasse
 ) {
 }
