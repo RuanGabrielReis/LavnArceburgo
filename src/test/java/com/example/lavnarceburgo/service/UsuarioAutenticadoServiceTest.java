@@ -126,4 +126,127 @@ class UsuarioAutenticadoServiceTest {
                         .validarAcessoAClasse(classe)
         );
     }
+
+    @Test
+    void professorDevePoderAcessarPropriaClasse() {
+
+        var autenticacao =
+                new UsernamePasswordAuthenticationToken(
+                        "professor@lavn.com",
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority(
+                                        "ROLE_PROFESSOR"
+                                )
+                        )
+                );
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(autenticacao);
+
+        when(
+                funcionarioRepository
+                        .findByUsuario_Email("professor@lavn.com")
+        )
+                .thenReturn(Optional.of(outroProfessor));
+
+        boolean resultado =
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe);
+
+        assertTrue(resultado);
+    }
+
+    @Test
+    void professorNaoDevePoderAcessarClasseDeOutroProfessor() {
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setEmail("professor2@lavn.com");
+
+        FuncionarioModel professorAutenticado =
+                new FuncionarioModel();
+
+        professorAutenticado.setCodfuncionario(3L);
+        professorAutenticado.setUsuario(usuario);
+        professorAutenticado.setCargo(Cargo.PROFESSOR);
+
+        var autenticacao =
+                new UsernamePasswordAuthenticationToken(
+                        "professor2@lavn.com",
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority(
+                                        "ROLE_PROFESSOR"
+                                )
+                        )
+                );
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(autenticacao);
+
+        when(
+                funcionarioRepository
+                        .findByUsuario_Email("professor2@lavn.com")
+        )
+                .thenReturn(
+                        Optional.of(professorAutenticado)
+                );
+
+        assertFalse(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        );
+
+        SecurityException exception =
+                assertThrows(
+                        SecurityException.class,
+                        () ->
+                                usuarioAutenticadoService
+                                        .validarAcessoAClasse(classe)
+                );
+
+        assertEquals(
+                "Você não possui acesso a esta turma",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void secretariaDevePoderAcessarQualquerClasse() {
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setEmail("secretaria@lavn.com");
+
+        FuncionarioModel secretaria =
+                new FuncionarioModel();
+
+        secretaria.setCodfuncionario(4L);
+        secretaria.setUsuario(usuario);
+        secretaria.setCargo(Cargo.SECRETARIA);
+
+        var autenticacao =
+                new UsernamePasswordAuthenticationToken(
+                        "secretaria@lavn.com",
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority(
+                                        "ROLE_SECRETARIA"
+                                )
+                        )
+                );
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(autenticacao);
+
+        when(
+                funcionarioRepository
+                        .findByUsuario_Email("secretaria@lavn.com")
+        )
+                .thenReturn(Optional.of(secretaria));
+
+        assertTrue(
+                usuarioAutenticadoService
+                        .podeAcessarClasse(classe)
+        );
+    }
 }

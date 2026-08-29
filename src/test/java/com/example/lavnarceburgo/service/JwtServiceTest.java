@@ -73,4 +73,19 @@ class JwtServiceTest {
                 jwtService.tokenValido(tokenInvalido)
         );
     }
+
+    @Test
+    void deveExtrairCodFuncionarioDoToken() {
+
+        String token =
+                jwtService.gerarToken(funcionario);
+
+        Long codFuncionario =
+                jwtService.extrairCodFuncionario(token);
+
+        assertEquals(
+                1L,
+                codFuncionario
+        );
+    }
 }
