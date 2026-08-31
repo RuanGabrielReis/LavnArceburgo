@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
+import com.example.lavnarceburgo.dto.funcionario.AlterarMinhaSenhaDTO;
 
 import java.util.List;
 
@@ -24,16 +25,21 @@ public class FuncionarioService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClasseRepository classeRepository;
+    // Permite descobrir qual funcionário está fazendo
+    // a requisição através do JWT.
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public FuncionarioService(
             FuncionarioRepository funcionarioRepository,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder, ClasseRepository classeRepository
+            PasswordEncoder passwordEncoder, ClasseRepository classeRepository,
+            UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.classeRepository = classeRepository;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
     }
 
     @Transactional
@@ -210,6 +216,42 @@ public class FuncionarioService {
                 funcionario.getCargo()
         );
     }
+
+    @Transactional
+    public void AlterarMinhaSenha(AlterarMinhaSenhaDTO dto){
+        //pega um funcionario que ja esta autenticado no sistema atraves do JWT.
+        FuncionarioModel funcionario = usuarioAutenticadoService.getFuncionarioAutenticado();
+
+        boolean senhaAtualCorreta = passwordEncoder.matches(dto.senhaAtual(), funcionario.getSenha());
+
+        //se a senha atual estiver errada o usuario nao vai conseguir processeguir
+        if(!senhaAtualCorreta){
+            throw new IllegalArgumentException("Senha atual incorreta");
+        }
+
+        //impedindo que o usuario use exatamente a mesma senha
+
+        if(dto.novaSenha() == funcionario.getSenha()){
+            throw new IllegalArgumentException("A nova senha não pode ser identica a anterior");
+        }
+
+        //Criptografa a nova senha com BCrypt
+        funcionario.setSenha(passwordEncoder.encode(dto.novaSenha()));
+
+        //salva a alteraação no banco
+
+        funcionarioRepository.save(
+                funcionario
+        );
+
+    }
+
+
+
+
+
+
+
 
     @Transactional
     public void alterarSenha(
