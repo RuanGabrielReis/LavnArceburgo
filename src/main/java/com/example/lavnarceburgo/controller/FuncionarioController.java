@@ -1,5 +1,6 @@
 package com.example.lavnarceburgo.controller;
 
+import com.example.lavnarceburgo.dto.funcionario.AlterarMinhaSenhaDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
@@ -62,6 +63,18 @@ public class FuncionarioController {
         );
     }
 
+    // Usuário autenticado altera a própria senha
+    @PutMapping("/me/senha")
+    public ResponseEntity<Void> alterarMinhaSenha(
+            @Valid @RequestBody AlterarMinhaSenhaDTO dto
+    ) {
+
+        funcionarioService.alterarMinhaSenha(dto);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // MASTER redefine a senha de outro funcionário
     @PutMapping("/{id}/senha")
     public ResponseEntity<Void> alterarSenha(
             @PathVariable Long id,
@@ -82,5 +95,4 @@ public class FuncionarioController {
 
         return ResponseEntity.noContent().build();
     }
-
 }

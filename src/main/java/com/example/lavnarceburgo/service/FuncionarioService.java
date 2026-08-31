@@ -1,7 +1,10 @@
 package com.example.lavnarceburgo.service;
 
+import com.example.lavnarceburgo.dto.funcionario.AlterarMinhaSenhaDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioRequestDTO;
 import com.example.lavnarceburgo.dto.funcionario.FuncionarioResponseDTO;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
+import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
 import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.model.UsuarioModel;
@@ -12,9 +15,6 @@ import com.example.lavnarceburgo.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.lavnarceburgo.dto.funcionario.FuncionarioUpdateDTO;
-import com.example.lavnarceburgo.dto.funcionario.FuncionarioSenhaDTO;
-import com.example.lavnarceburgo.dto.funcionario.AlterarMinhaSenhaDTO;
 
 import java.util.List;
 
@@ -25,14 +25,13 @@ public class FuncionarioService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClasseRepository classeRepository;
-    // Permite descobrir qual funcionário está fazendo
-    // a requisição através do JWT.
     private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     public FuncionarioService(
             FuncionarioRepository funcionarioRepository,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder, ClasseRepository classeRepository,
+            PasswordEncoder passwordEncoder,
+            ClasseRepository classeRepository,
             UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.funcionarioRepository = funcionarioRepository;
@@ -99,7 +98,9 @@ public class FuncionarioService {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Funcionário não encontrado")
+                        new ResourceNotFoundException(
+                                "Funcionário não encontrado"
+                        )
                 );
 
         return converterParaDTO(funcionario);
@@ -113,7 +114,9 @@ public class FuncionarioService {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Funcionário não encontrado")
+                        new ResourceNotFoundException(
+                                "Funcionário não encontrado"
+                        )
                 );
 
         if (funcionario.getCargo() == Cargo.MASTER
@@ -136,6 +139,7 @@ public class FuncionarioService {
 
         if (!usuario.getCpf().equals(dto.cpf())
                 && usuarioRepository.existsByCpf(dto.cpf())) {
+
             throw new IllegalArgumentException(
                     "Já existe um usuário cadastrado com esse CPF"
             );
@@ -143,6 +147,7 @@ public class FuncionarioService {
 
         if (!usuario.getEmail().equals(dto.email())
                 && usuarioRepository.existsByEmail(dto.email())) {
+
             throw new IllegalArgumentException(
                     "Já existe um usuário cadastrado com esse e-mail"
             );
@@ -177,7 +182,9 @@ public class FuncionarioService {
 
         FuncionarioModel funcionario = funcionarioRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Funcionário não encontrado")
+                        new ResourceNotFoundException(
+                                "Funcionário não encontrado"
+                        )
                 );
 
         if (funcionario.getCargo() == Cargo.MASTER) {
@@ -218,40 +225,42 @@ public class FuncionarioService {
     }
 
     @Transactional
-    public void AlterarMinhaSenha(AlterarMinhaSenhaDTO dto){
-        //pega um funcionario que ja esta autenticado no sistema atraves do JWT.
-        FuncionarioModel funcionario = usuarioAutenticadoService.getFuncionarioAutenticado();
+    public void alterarMinhaSenha(AlterarMinhaSenhaDTO dto) {
 
-        boolean senhaAtualCorreta = passwordEncoder.matches(dto.senhaAtual(), funcionario.getSenha());
+        // Pega o funcionário autenticado através do JWT
+        FuncionarioModel funcionario =
+                usuarioAutenticadoService.getFuncionarioAutenticado();
 
-        //se a senha atual estiver errada o usuario nao vai conseguir processeguir
-        if(!senhaAtualCorreta){
-            throw new IllegalArgumentException("Senha atual incorreta");
+        // Compara a senha digitada com o hash BCrypt salvo no banco
+        boolean senhaAtualCorreta =
+                passwordEncoder.matches(
+                        dto.senhaAtual(),
+                        funcionario.getSenha()
+                );
+
+        if (!senhaAtualCorreta) {
+            throw new IllegalArgumentException(
+                    "Senha atual incorreta"
+            );
         }
 
-        //impedindo que o usuario use exatamente a mesma senha
-
-        if(dto.novaSenha() == funcionario.getSenha()){
-            throw new IllegalArgumentException("A nova senha não pode ser identica a anterior");
+        // Impede o usuário de utilizar novamente a senha atual
+        if (passwordEncoder.matches(
+                dto.novaSenha(),
+                funcionario.getSenha()
+        )) {
+            throw new IllegalArgumentException(
+                    "A nova senha não pode ser idêntica à anterior"
+            );
         }
 
-        //Criptografa a nova senha com BCrypt
-        funcionario.setSenha(passwordEncoder.encode(dto.novaSenha()));
-
-        //salva a alteraação no banco
-
-        funcionarioRepository.save(
-                funcionario
+        // Criptografa a nova senha antes de salvar
+        funcionario.setSenha(
+                passwordEncoder.encode(dto.novaSenha())
         );
 
+        funcionarioRepository.save(funcionario);
     }
-
-
-
-
-
-
-
 
     @Transactional
     public void alterarSenha(
