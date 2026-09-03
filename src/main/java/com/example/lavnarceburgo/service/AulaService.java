@@ -3,9 +3,9 @@ package com.example.lavnarceburgo.service;
 import com.example.lavnarceburgo.dto.aula.AulaRequestDTO;
 import com.example.lavnarceburgo.dto.aula.AulaResponseDTO;
 import com.example.lavnarceburgo.exception.ResourceNotFoundException;
-import com.example.lavnarceburgo.model.AlunoModel;
 import com.example.lavnarceburgo.model.AulaModel;
 import com.example.lavnarceburgo.model.ClasseModel;
+import com.example.lavnarceburgo.model.FuncionarioModel;
 import com.example.lavnarceburgo.repository.AulaRepository;
 import com.example.lavnarceburgo.repository.ClasseRepository;
 import org.springframework.stereotype.Service;
@@ -20,10 +20,10 @@ public class AulaService {
     private final ClasseRepository classeRepository;
     private final UsuarioAutenticadoService usuarioAutenticadoService;
 
-
     public AulaService(
             AulaRepository aulaRepository,
-            ClasseRepository classeRepository, UsuarioAutenticadoService usuarioAutenticadoService
+            ClasseRepository classeRepository,
+            UsuarioAutenticadoService usuarioAutenticadoService
     ) {
         this.aulaRepository = aulaRepository;
         this.classeRepository = classeRepository;
@@ -91,6 +91,8 @@ public class AulaService {
                         new ResourceNotFoundException("Aula não encontrada")
                 );
 
+        validarAcessoAula(aula);
+
         ClasseModel classe = classeRepository.findById(dto.codclasse())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Classe não encontrada")
@@ -126,17 +128,22 @@ public class AulaService {
                         new ResourceNotFoundException("Aula não encontrada")
                 );
 
+        validarAcessoAula(aula);
+
         aulaRepository.delete(aula);
     }
 
     private AulaResponseDTO converterParaDTO(AulaModel aula) {
 
         ClasseModel classe = aula.getClasse();
+        FuncionarioModel professor = classe.getProfessor();
 
         return new AulaResponseDTO(
                 aula.getCodaula(),
                 classe.getCodclasse(),
                 classe.getNivel(),
+                professor.getCodfuncionario(),
+                professor.getUsuario().getNome(),
                 aula.getDiahora()
         );
     }
