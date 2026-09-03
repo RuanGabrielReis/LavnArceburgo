@@ -38,6 +38,15 @@ public class AulaService {
                         new ResourceNotFoundException("Classe não encontrada")
                 );
 
+        if (aulaRepository.existsByClasseCodclasseAndDiahora(
+                dto.codclasse(),
+                dto.diahora()
+        )) {
+            throw new IllegalArgumentException(
+                    "Já existe uma aula desta classe neste horário"
+            );
+        }
+
         AulaModel aula = new AulaModel();
 
         aula.setClasse(classe);
@@ -97,6 +106,16 @@ public class AulaService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Classe não encontrada")
                 );
+
+        if (aulaRepository.existsByClasseCodclasseAndDiahoraAndCodaulaNot(
+                dto.codclasse(),
+                dto.diahora(),
+                id
+        )) {
+            throw new IllegalArgumentException(
+                    "Já existe uma aula desta classe neste horário"
+            );
+        }
 
         aula.setClasse(classe);
         aula.setDiahora(dto.diahora());

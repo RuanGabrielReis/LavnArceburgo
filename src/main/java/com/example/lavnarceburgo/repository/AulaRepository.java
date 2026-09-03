@@ -15,4 +15,15 @@ public interface AulaRepository extends JpaRepository<AulaModel, Long> {
             LocalDateTime inicio,
             LocalDateTime fim
     );
+
+    boolean existsByClasseCodclasseAndDiahora(
+            Long codclasse,
+            LocalDateTime diahora
+    );
+
+    boolean existsByClasseCodclasseAndDiahoraAndCodaulaNot(
+            Long codclasse,
+            LocalDateTime diahora,
+            Long codaula
+    );
 }
